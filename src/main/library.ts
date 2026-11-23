@@ -1,6 +1,7 @@
 // The local game library: one JSON index plus a folder per game holding its cached files.
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { PlayerSettings, sanitizePlayerSettings } from '../shared/settings';
 
 export interface Game {
   id: string;            // Scratch project ID
@@ -14,6 +15,7 @@ export interface Game {
   lastPlayedAt: string | null;
   playtimeSeconds: number;
   notes: string;         // save codes and anything else (UI comes in v0.2)
+  settings: Partial<PlayerSettings>; // per-game overrides of the global player settings
 }
 
 interface LibraryFile {
@@ -39,7 +41,10 @@ export class Library {
     if (!fs.existsSync(this.indexPath)) return;
     try {
       const parsed = JSON.parse(fs.readFileSync(this.indexPath, 'utf8')) as LibraryFile;
-      this.games = Array.isArray(parsed.games) ? parsed.games : [];
+      this.games = (Array.isArray(parsed.games) ? parsed.games : []).map((g) => ({
+        ...g,
+        settings: sanitizePlayerSettings(g.settings, true), // older libraries have no settings field
+      }));
     } catch {
       // Never silently destroy a corrupt library: keep a copy and start fresh.
       fs.copyFileSync(this.indexPath, `${this.indexPath}.corrupt-${Date.now()}`);
@@ -73,7 +78,7 @@ export class Library {
   }
 
   add(
-    meta: Omit<Game, 'projectFile' | 'hasThumbnail' | 'addedAt' | 'lastPlayedAt' | 'playtimeSeconds' | 'notes'>,
+    meta: Omit<Game, 'projectFile' | 'hasThumbnail' | 'addedAt' | 'lastPlayedAt' | 'playtimeSeconds' | 'notes' | 'settings'>,
     project: { data: Uint8Array; type: string },
     thumbnail: Uint8Array | null,
   ): Game {
@@ -92,6 +97,7 @@ export class Library {
       lastPlayedAt: existing?.lastPlayedAt ?? null,
       playtimeSeconds: existing?.playtimeSeconds ?? 0,
       notes: existing?.notes ?? '', // re-downloading a game must never wipe its notes
+      settings: existing?.settings ?? {},
     };
     this.games = [...this.games.filter((g) => g.id !== meta.id), game];
     this.save();
@@ -108,6 +114,15 @@ export class Library {
     const game = this.get(id);
     if (!game) throw new Error(`Game ${id} is not in the library`);
     return fs.readFileSync(path.join(this.gameDir(id), game.projectFile));
+  }
+
+  /** Replaces a game's overrides. Pass {} to go back to using the global defaults. */
+  setSettings(id: string, overrides: unknown): Game | undefined {
+    const game = this.get(id);
+    if (!game) return undefined;
+    game.settings = sanitizePlayerSettings(overrides, true);
+    this.save();
+    return game;
   }
 
   recordSession(id: string, seconds: number): void {

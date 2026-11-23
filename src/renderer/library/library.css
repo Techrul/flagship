@@ -25,7 +25,12 @@ button, input, select { font: inherit; color: inherit; }
   border-bottom: 1px solid var(--border);
 }
 
-.brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.brand {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  padding: 4px 6px; margin-left: -6px;
+  border: none; border-radius: 8px; background: transparent; cursor: pointer;
+}
+.brand:hover { background: var(--surface); }
 .brand-name { font-weight: 700; font-size: 19px; letter-spacing: 0.2px; }
 
 /* A pennant flag drawn in CSS (no Scratch artwork). */
@@ -75,13 +80,35 @@ button, input, select { font: inherit; color: inherit; }
 }
 .add-form button:disabled { opacity: 0.5; cursor: default; }
 
-#theme-select {
-  margin-left: auto;
-  padding: 8px 10px;
-  background: var(--surface);
+a { color: var(--accent); }
+code { color: var(--accent); }
+
+.icon-button {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
   border: 1px solid var(--border);
   border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: pointer;
 }
+.topbar .icon-button { margin-left: auto; }
+.icon-button:hover, .icon-button.active { color: var(--text); background: var(--surface-hover); }
+.icon-button.active { border-color: var(--accent); color: var(--accent); }
+
+.secondary-button {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.secondary-button:hover { background: var(--surface-hover); border-color: var(--accent); }
 
 /* ---------- status / progress ---------- */
 .status {
@@ -220,3 +247,208 @@ main { padding: 24px 28px 48px; }
   border-left: 60px solid var(--accent);
   opacity: 0.8;
 }
+
+.card-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--overlay);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
+}
+
+/* ---------- settings page ---------- */
+.settings-page { max-width: 920px; margin: 0 auto; }
+.settings-tabs { display: flex; gap: 6px; margin: -6px 0 18px; }
+.settings-tabs a {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 13px;
+  text-decoration: none;
+}
+.settings-tabs a:hover { color: var(--text); border-color: var(--accent); }
+
+.settings-card {
+  padding: 22px 24px 10px;
+  margin-bottom: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  scroll-margin-top: 90px;
+}
+.settings-card h2 { margin: 0 0 14px; font-size: 18px; }
+.settings-card h3, .settings-group h3 {
+  margin: 18px 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.card-head h2 { margin: 0; }
+.intro { margin: 0 0 12px; color: var(--text-dim); line-height: 1.55; font-size: 14px; }
+.intro strong { color: var(--text); }
+.intro.dim { font-size: 13px; }
+.warning { color: var(--danger); font-size: 14px; }
+.group-blurb { margin: 0 0 4px; color: var(--text-dim); font-size: 13px; }
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+}
+.setting-row:first-of-type { border-top: none; }
+.setting-text { flex: 1; min-width: 0; }
+.setting-label { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+.setting-description { margin: 4px 0 0; color: var(--text-dim); font-size: 13px; line-height: 1.5; }
+.setting-default { margin: 4px 0 0; color: var(--text-dim); font-size: 12px; opacity: 0.8; }
+.setting-control { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.setting-row.is-custom .setting-label label { color: var(--accent); }
+
+.custom-badge {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 700;
+}
+.reset-button {
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+}
+.reset-button:hover { color: var(--text); border-color: var(--accent); }
+
+.setting-control select,
+.number-input,
+.text-input {
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  outline: none;
+}
+.setting-control select:focus, .number-input:focus, .text-input:focus { border-color: var(--accent); }
+.number-input { width: 90px; }
+.text-input { width: 180px; }
+.unit { color: var(--text-dim); font-size: 13px; }
+
+/* Toggle switch */
+.toggle {
+  appearance: none;
+  position: relative;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transition: transform 0.15s, background 0.15s;
+}
+.toggle:checked { background: var(--accent); border-color: var(--accent); }
+.toggle:checked::after { transform: translateX(18px); background: var(--accent-text); }
+.toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+input[type="color"] {
+  width: 40px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  cursor: pointer;
+}
+input[type="color"]:disabled { opacity: 0.35; cursor: default; }
+
+/* Theme picker */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  cursor: pointer;
+  text-align: left;
+}
+.theme-card:hover { border-color: var(--text-dim); }
+.theme-card.selected { border-color: var(--accent); }
+.theme-swatch {
+  position: relative;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(127, 127, 127, 0.25);
+}
+.theme-swatch .sw-card { position: absolute; left: 10px; top: 10px; right: 30px; bottom: 10px; border-radius: 6px; }
+.theme-swatch .sw-line { position: absolute; left: 18px; top: 20px; width: 50px; height: 5px; border-radius: 3px; opacity: 0.85; }
+.theme-swatch .sw-dot { position: absolute; right: 10px; top: 10px; width: 14px; height: 14px; border-radius: 50%; }
+.theme-swatch.custom {
+  display: grid;
+  place-items: center;
+  background: repeating-linear-gradient(45deg, var(--surface), var(--surface) 8px, var(--surface-hover) 8px, var(--surface-hover) 16px);
+  color: var(--text-dim);
+  font-family: ui-monospace, monospace;
+  font-size: 18px;
+}
+.theme-name { font-size: 13px; font-weight: 600; padding: 0 2px 2px; }
+
+/* ---------- dialog ---------- */
+.dialog {
+  width: min(760px, calc(100vw - 48px));
+  max-height: calc(100vh - 64px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+}
+.dialog[open] { display: flex; flex-direction: column; }
+.dialog::backdrop { background: var(--overlay); backdrop-filter: blur(3px); }
+.dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.dialog-head h2 { margin: 2px 0 0; font-size: 20px; }
+.dialog-kicker { margin: 0; color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.dialog-body { padding: 16px 24px; overflow-y: auto; }
+.dialog-foot { display: flex; justify-content: flex-end; padding: 12px 24px; border-top: 1px solid var(--border); }

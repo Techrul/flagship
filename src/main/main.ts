@@ -5,6 +5,9 @@ import { pathToFileURL } from 'node:url';
 import { Library } from './library';
 import { downloadProject, downloadThumbnail, fetchMetadata, parseProjectInput, ScratchError } from './scratch';
 import { runSmokeTest } from './smoke';
+import { SettingsStore } from './settings-store';
+import { CustomThemes } from './custom-themes';
+import { effectiveSettings } from '../shared/settings';
 
 // Serves cached thumbnails to the UI as flagship-media://thumb/<id>
 protocol.registerSchemesAsPrivileged([
@@ -13,6 +16,8 @@ protocol.registerSchemesAsPrivileged([
 
 const RENDERER_DIR = path.join(__dirname, '..', 'renderer');
 let library: Library;
+let settings: SettingsStore;
+let customThemes: CustomThemes;
 let libraryWindow: BrowserWindow | null = null;
 const playerWindows = new Map<string, BrowserWindow>();
 
@@ -120,14 +125,48 @@ function registerIpc(): void {
   // The player asks for its project file; it comes back as raw bytes.
   ipcMain.handle('game:project', (_event, id: string) => library.readProject(String(id)));
 
+  // ----- settings -----
+  ipcMain.handle('settings:get', () => settings.get());
+
+  ipcMain.handle('settings:set', (_event, patch: unknown) => {
+    const updated = settings.update(patch);
+    broadcast('settings:changed', updated);
+    return updated;
+  });
+
+  ipcMain.handle('game:set-settings', (_event, id: string, overrides: unknown) => {
+    const game = library.setSettings(String(id), overrides);
+    if (game) broadcast('game:settings-changed', { id: game.id });
+    return game ?? null;
+  });
+
+  /** Global defaults merged with the game's overrides: what the player actually uses. */
+  ipcMain.handle('game:effective-settings', (_event, id: string) =>
+    effectiveSettings(settings.get().player, library.get(String(id))?.settings));
+
+  // ----- custom themes -----
+  ipcMain.handle('themes:list', () => customThemes.list());
+  ipcMain.handle('themes:open-folder', () => shell.openPath(customThemes.dir));
+
   ipcMain.handle('game:open-on-scratch', (_event, id: string) => {
     if (/^\d+$/.test(String(id))) shell.openExternal(`https://scratch.mit.edu/projects/${id}/`);
   });
 }
 
+function broadcast(channel: string, payload: unknown): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.webContents.send(channel, payload);
+  }
+}
+
 function registerMediaProtocol(): void {
   protocol.handle('flagship-media', (request) => {
     const url = new URL(request.url);
+    if (url.host === 'theme') {
+      const file = customThemes.resolve(decodeURIComponent(url.pathname.replace(/^\//, '')));
+      if (!file) return new Response('', { status: 404, headers: { 'content-type': 'text/css' } });
+      return new Response(fs.readFileSync(file), { headers: { 'content-type': 'text/css', 'cache-control': 'no-store' } });
+    }
     const id = url.pathname.replace(/^\//, '');
     if (url.host !== 'thumb' || !/^\d{1,12}$/.test(id)) {
       return new Response('Not found', { status: 404 });
@@ -140,6 +179,8 @@ function registerMediaProtocol(): void {
 
 app.whenReady().then(async () => {
   library = new Library(path.join(app.getPath('userData'), 'library'));
+  settings = new SettingsStore(app.getPath('userData'));
+  customThemes = new CustomThemes(path.join(app.getPath('userData'), 'themes'));
   registerIpc();
   registerMediaProtocol();
   libraryWindow = createLibraryWindow();

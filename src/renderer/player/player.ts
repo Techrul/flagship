@@ -1,15 +1,13 @@
-import type { FlagshipApi } from '../shared/api';
+import { api } from '../shared/api';
+import { applyTheme } from '../shared/theme-runtime';
+import type { PlayerSettings } from '../../shared/settings';
 
-// Scaffolding (TurboWarp's player) is loaded by a <script> tag and lives on window.Scaffolding.
+// TurboWarp's player and its addons are loaded by <script> tags.
 declare const Scaffolding: any;
+declare const ScaffoldingAddons: any;
 
-const api = (window as unknown as { flagship: FlagshipApi }).flagship;
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const state = (value: string) => { (window as any).__flagshipState = value; }; // read by the smoke test
-
-try {
-  document.documentElement.dataset.theme = localStorage.getItem('flagship:theme') || 'oled';
-} catch { /* ignore */ }
 
 const id = new URLSearchParams(location.search).get('id') ?? '';
 const overlay = $<HTMLDivElement>('overlay');
@@ -28,26 +26,63 @@ function showError(message: string) {
   overlay.hidden = false;
 }
 
+/** Settings that can be changed while the game runs. */
+function applyLiveSettings(scaffolding: any, s: PlayerSettings) {
+  const vm = scaffolding.vm;
+  vm.setFramerate(s.framerate);
+  vm.setInterpolation(s.interpolation);
+  vm.setTurboMode(s.turbo);
+  scaffolding.renderer.setUseHighQualityRender(s.highQualityPen);
+  vm.setRuntimeOptions({
+    maxClones: s.infiniteClones ? Infinity : 300,
+    fencing: !s.removeFencing,
+    miscLimits: !s.removeMiscLimits,
+  });
+  scaffolding.setUsername(s.username);
+  (window as any).__flagshipSettings = s; // read by the smoke test
+}
+
 async function main() {
   state('loading');
-  const game = await api.getGame(id);
+  const [game, appSettings, settings] = await Promise.all([
+    api.getGame(id), api.getSettings(), api.getEffectiveSettings(id),
+  ]);
+  applyTheme(appSettings);
+  api.onSettingsChanged((s) => applyTheme(s));
   if (!game) return showError("This game isn't in your library anymore.");
   document.title = `${game.title} — Flagship`;
   $('title').textContent = game.title;
 
   const scaffolding = new Scaffolding.Scaffolding();
-  // v0.1 uses TurboWarp's defaults; per-game settings (turbo, FPS, interpolation…) arrive in v0.2.
-  scaffolding.width = 480;
-  scaffolding.height = 360;
+  scaffolding.width = settings.stageWidth;
+  scaffolding.height = settings.stageHeight;
   scaffolding.resizeMode = 'preserve-ratio';
   scaffolding.editableLists = false;
   scaffolding.setup();
   scaffolding.appendTo($('stage'));
 
-  // Cloud variables are saved on this computer, per game. Many Scratch games keep their saves
-  // in cloud variables, so this alone makes a lot of saves survive closing the window.
-  scaffolding.addCloudProvider(new Scaffolding.Cloud.LocalStorageProvider(`flagship:cloud:${id}`));
-  scaffolding.setAccentColor('#2ee6c8');
+  // Must be set before the project loads, since it decides how scripts get compiled.
+  scaffolding.vm.setCompilerOptions({ enabled: settings.compiler, warpTimer: settings.warpTimer });
+  applyLiveSettings(scaffolding, settings);
+
+  // Many Scratch games keep their saves in cloud variables; this keeps them on this computer, per game.
+  if (settings.cloudSaves) {
+    scaffolding.addCloudProvider(new Scaffolding.Cloud.LocalStorageProvider(`flagship:cloud:${id}`));
+  }
+  scaffolding.setAccentColor(getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#2ee6c8');
+
+  ScaffoldingAddons.run(scaffolding, {
+    gamepad: settings.gamepad,
+    pointerlock: settings.pointerLock,
+    specialCloudBehaviors: false,
+    unsafeCloudBehaviors: false, // never let a game run arbitrary JavaScript
+    pause: false,
+  });
+
+  // Settings edited in the library while this game is open.
+  const refresh = async () => applyLiveSettings(scaffolding, await api.getEffectiveSettings(id));
+  api.onSettingsChanged(refresh);
+  api.onGameSettingsChanged((p) => { if (p.id === id) refresh(); });
 
   scaffolding.storage.onprogress = (total: number, loaded: number) => {
     if (total > 0) loadingText.textContent = `Loading assets… ${Math.round((loaded / total) * 100)}%`;
@@ -60,18 +95,22 @@ async function main() {
     return showError(`Couldn't load this game: ${(error as Error).message}. Try re-downloading it from the library.`);
   }
 
-  // Browsers only allow sound after a click, so wait for one before starting, like Scratch does.
-  state('ready');
-  loading.hidden = true;
-  playButton.hidden = false;
-  playButton.focus();
-
   const start = () => {
     overlay.hidden = true;
     scaffolding.start(); // starts the VM and runs "when flag clicked" scripts
     state('running');
   };
-  playButton.addEventListener('click', start, { once: true });
+
+  if (settings.autoplay) {
+    start();
+  } else {
+    // Browsers only allow sound after a click, so wait for one before starting, like Scratch does.
+    state('ready');
+    loading.hidden = true;
+    playButton.hidden = false;
+    playButton.focus();
+    playButton.addEventListener('click', start, { once: true });
+  }
 
   $('flag').addEventListener('click', () => {
     if (!overlay.hidden) return start();

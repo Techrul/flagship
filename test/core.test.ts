@@ -76,3 +76,61 @@ test('a corrupt library.json is backed up, not destroyed', () => {
   assert.equal(lib.list().length, 0);
   assert.ok(fs.readdirSync(root).some((f) => f.startsWith('library.json.corrupt-')));
 });
+
+// ---------- settings ----------
+import { DEFAULT_PLAYER_SETTINGS, effectiveSettings, sanitizePlayerSettings } from '../src/shared/settings';
+import { SettingsStore } from '../src/main/settings-store';
+import { CustomThemes } from '../src/main/custom-themes';
+
+test('sanitize drops unknown keys and wrong types, clamps numbers', () => {
+  const clean = sanitizePlayerSettings({ turbo: 'yes', framerate: 1e9, username: 'x'.repeat(100), evil: 1, gamepad: true }, true);
+  assert.deepEqual(clean, { framerate: 4096, username: 'x'.repeat(32), gamepad: true });
+  assert.deepEqual(sanitizePlayerSettings(null), DEFAULT_PLAYER_SETTINGS);
+});
+
+test('per-game overrides win over defaults', () => {
+  const s = effectiveSettings({ ...DEFAULT_PLAYER_SETTINGS, turbo: true }, { framerate: 60 });
+  assert.equal(s.turbo, true);
+  assert.equal(s.framerate, 60);
+});
+
+test('settings store saves, merges partial updates and rejects junk', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'flagship-test-'));
+  const store = new SettingsStore(dir);
+  store.update({ theme: 'mocha', player: { turbo: true } });
+  store.update({ player: { framerate: 60 }, accent: '#ABCDEF' });
+  store.update({ theme: '../../etc/passwd', accent: 'red' });
+  const reloaded = new SettingsStore(dir).get();
+  assert.equal(reloaded.theme, 'mocha');
+  assert.equal(reloaded.accent, '#abcdef');
+  assert.equal(reloaded.player.turbo, true);
+  assert.equal(reloaded.player.framerate, 60);
+  store.update({ accent: null });
+  assert.equal(new SettingsStore(dir).get().accent, null);
+});
+
+test('library migrates games saved before settings existed', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'flagship-test-'));
+  fs.writeFileSync(path.join(root, 'library.json'), JSON.stringify({ version: 1, games: [{ ...meta, projectFile: 'project.sb3', hasThumbnail: false, addedAt: 'x', lastPlayedAt: null, playtimeSeconds: 0, notes: '' }] }));
+  const game = new Library(root).get('104')!;
+  assert.deepEqual(game.settings, {});
+});
+
+test('per-game settings persist and survive re-download', () => {
+  const lib = tempLibrary();
+  lib.add(meta, project, null);
+  lib.setSettings('104', { turbo: true, bogus: 5 });
+  lib.add(meta, project, null);
+  assert.deepEqual(new Library(lib.root).get('104')!.settings, { turbo: true });
+});
+
+test('custom themes: example created, names parsed, paths locked to the folder', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'flagship-themes-'));
+  const themes = new CustomThemes(dir);
+  fs.writeFileSync(path.join(dir, 'neon.css'), '/* name: Neon Dreams */ :root { --accent: #f0f; }');
+  const list = themes.list();
+  assert.deepEqual(list.map((t) => t.name), ['Example (edit me!)', 'Neon Dreams']);
+  assert.equal(themes.resolve('../settings.json'), null);
+  assert.equal(themes.resolve('missing.css'), null);
+  assert.ok(themes.resolve('neon.css'));
+});

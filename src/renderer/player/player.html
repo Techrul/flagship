@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <!-- The TurboWarp compiler needs 'unsafe-eval'; Scratch loads assets from blob:/data: URLs. -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self' blob: data:; script-src 'self' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: data:; connect-src 'self' blob: data:; worker-src 'self' blob:">
+        content="default-src 'self' blob: data:; script-src 'self' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' flagship-media:; img-src 'self' blob: data:; media-src 'self' blob: data:; connect-src 'self' blob: data:; worker-src 'self' blob:">
   <title>Flagship</title>
   <link rel="stylesheet" href="../shared/themes.css">
   <link rel="stylesheet" href="player.css">
@@ -33,6 +33,7 @@
   </div>
 
   <script src="vendor/scaffolding-min.js"></script>
+  <script src="vendor/addons.js"></script>
   <script src="player.js"></script>
 </body>
 </html>

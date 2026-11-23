@@ -1,6 +1,6 @@
-import type { FlagshipApi, Game } from '../shared/api';
+import { api, Game } from '../shared/api';
+import { initSettings, openGameSettings, renderSettingsPage } from './settings-view';
 
-const api = (window as unknown as { flagship: FlagshipApi }).flagship;
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 const grid = $<HTMLDivElement>('grid');
@@ -12,19 +12,26 @@ const addButton = $<HTMLButtonElement>('add-button');
 const status = $<HTMLDivElement>('status');
 const statusText = $<HTMLSpanElement>('status-text');
 const progressBar = $<HTMLDivElement>('progress-bar');
-const themeSelect = $<HTMLSelectElement>('theme-select');
 const template = $<HTMLTemplateElement>('card-template');
 
-// ---------- theme ----------
-function applyTheme(theme: string) {
-  document.documentElement.dataset.theme = theme;
-  themeSelect.value = theme;
-  try { localStorage.setItem('flagship:theme', theme); } catch { /* storage unavailable; fine */ }
+// ---------- navigation ----------
+const libraryView = $<HTMLElement>('library-view');
+const settingsView = $<HTMLElement>('settings-view');
+const settingsButton = $<HTMLButtonElement>('nav-settings');
+
+function showView(view: 'library' | 'settings') {
+  libraryView.hidden = view !== 'library';
+  settingsView.hidden = view !== 'settings';
+  settingsButton.classList.toggle('active', view === 'settings');
+  if (view === 'settings') renderSettingsPage();
+  window.scrollTo(0, 0);
 }
-let savedTheme = 'oled';
-try { savedTheme = localStorage.getItem('flagship:theme') || 'oled'; } catch { /* ignore */ }
-applyTheme(savedTheme);
-themeSelect.addEventListener('change', () => applyTheme(themeSelect.value));
+settingsButton.addEventListener('click', () => showView(settingsView.hidden ? 'settings' : 'library'));
+$('nav-library').addEventListener('click', () => showView('library'));
+document.addEventListener('keydown', (event) => {
+  const dialogOpen = document.querySelector('dialog[open]');
+  if (event.key === 'Escape' && !settingsView.hidden && !dialogOpen) showView('library');
+});
 
 // ---------- status bar ----------
 let hideTimer: number | undefined;
@@ -74,6 +81,11 @@ function renderCard(game: Game): HTMLElement {
   (card.querySelector('.card-title') as HTMLElement).title = game.title;
   card.querySelector('.card-meta')!.textContent = `by ${game.author} · ${formatPlaytime(game.playtimeSeconds)}`;
 
+  const customCount = Object.keys(game.settings ?? {}).length;
+  const badge = card.querySelector<HTMLElement>('.card-badge')!;
+  badge.hidden = customCount === 0;
+  badge.title = `${customCount} custom setting${customCount === 1 ? '' : 's'}`;
+
   card.querySelector('.card-art')!.addEventListener('click', () => api.playGame(game.id));
 
   const menu = card.querySelector<HTMLElement>('.card-dropdown')!;
@@ -86,6 +98,7 @@ function renderCard(game: Game): HTMLElement {
 
   menu.addEventListener('click', async (event) => {
     const action = (event.target as HTMLElement).dataset.action;
+    if (action === 'settings') openGameSettings(game);
     if (action === 'scratch') api.openOnScratch(game.id);
     if (action === 'redownload') await addGame(game.id);
     if (action === 'remove') {
@@ -135,4 +148,6 @@ form.addEventListener('submit', (event) => {
 });
 
 api.onLibraryChanged(refresh);
-refresh();
+api.onGameSettingsChanged(refresh);
+initSettings().then(refresh);
+if (location.hash === '#settings') showView('settings'); // used by the smoke test
