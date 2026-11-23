@@ -1,0 +1,222 @@
+* { box-sizing: border-box; }
+[hidden] { display: none !important; } /* the hidden attribute must beat display:flex/grid below */
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select { font: inherit; color: inherit; }
+
+/* ---------- top bar ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 28px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.brand-name { font-weight: 700; font-size: 19px; letter-spacing: 0.2px; }
+
+/* A pennant flag drawn in CSS (no Scratch artwork). */
+.brand-flag {
+  position: relative;
+  width: 22px;
+  height: 24px;
+}
+.brand-flag::before {   /* pole */
+  content: "";
+  position: absolute;
+  left: 2px; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--text);
+}
+.brand-flag::after {    /* pennant */
+  content: "";
+  position: absolute;
+  left: 5px; top: 1px;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: 16px solid var(--accent);
+}
+
+.add-form { flex: 1; display: flex; gap: 10px; max-width: 640px; }
+.add-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  outline: none;
+}
+.add-form input:focus { border-color: var(--accent); }
+.add-form input::placeholder { color: var(--text-dim); }
+
+.add-form button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 650;
+  cursor: pointer;
+}
+.add-form button:disabled { opacity: 0.5; cursor: default; }
+
+#theme-select {
+  margin-left: auto;
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+/* ---------- status / progress ---------- */
+.status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 28px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 14px;
+}
+.status.error { color: var(--danger); }
+.status.error .progress { display: none; }
+.progress { flex: 0 0 220px; height: 4px; background: var(--surface-hover); border-radius: 2px; overflow: hidden; }
+#progress-bar { height: 100%; width: 0; background: var(--accent); transition: width 0.15s; }
+
+/* ---------- library grid ---------- */
+main { padding: 24px 28px 48px; }
+
+.section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 18px; }
+.section-head h1 { margin: 0; font-size: 22px; }
+.count { color: var(--text-dim); font-size: 14px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: visible;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+.card-art {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
+  background: var(--surface-hover);
+  cursor: pointer;
+}
+.card-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card-art img.missing { visibility: hidden; }
+
+.card-play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  padding-left: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 22px;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.15s, transform 0.15s;
+}
+.card-art:hover .card-play,
+.card-art:focus-visible .card-play { opacity: 1; transform: scale(1); }
+
+.card-body { display: flex; align-items: flex-start; gap: 8px; padding: 12px 12px 14px 14px; }
+.card-text { flex: 1; min-width: 0; }
+.card-title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-meta { margin: 0; font-size: 13px; color: var(--text-dim); }
+
+.card-menu {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 18px;
+  cursor: pointer;
+}
+.card-menu:hover { background: var(--surface-hover); color: var(--text); }
+
+.card-dropdown {
+  position: absolute;
+  right: 10px;
+  bottom: 48px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  min-width: 170px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+.card-dropdown[hidden] { display: none; }
+.card-dropdown button {
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.card-dropdown button:hover { background: var(--surface-hover); }
+.card-dropdown .danger { color: var(--danger); }
+
+/* ---------- empty state ---------- */
+.empty { margin: 12vh auto 0; max-width: 420px; text-align: center; color: var(--text-dim); }
+.empty h2 { color: var(--text); margin: 18px 0 8px; font-size: 20px; }
+.empty code { color: var(--accent); }
+.empty-flag {
+  margin: 0 auto;
+  width: 0;
+  height: 0;
+  border-top: 26px solid transparent;
+  border-bottom: 26px solid transparent;
+  border-left: 60px solid var(--accent);
+  opacity: 0.8;
+}

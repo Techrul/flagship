@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oled">
+<head>
+  <meta charset="UTF-8">
+  <!-- The TurboWarp compiler needs 'unsafe-eval'; Scratch loads assets from blob:/data: URLs. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self' blob: data:; script-src 'self' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: data:; connect-src 'self' blob: data:; worker-src 'self' blob:">
+  <title>Flagship</title>
+  <link rel="stylesheet" href="../shared/themes.css">
+  <link rel="stylesheet" href="player.css">
+</head>
+<body>
+  <header class="controls">
+    <button id="flag" class="control" title="Green flag (restart)"><span class="flag-icon"></span></button>
+    <button id="stop" class="control" title="Stop"><span class="stop-icon"></span></button>
+    <h1 id="title" class="title">Loading…</h1>
+    <button id="fullscreen" class="control wide" title="Fullscreen (F11)">⛶ Fullscreen</button>
+  </header>
+
+  <div id="stage-wrap" class="stage-wrap">
+    <div id="stage" class="stage"></div>
+    <div id="overlay" class="overlay">
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <span id="loading-text">Loading game…</span>
+      </div>
+      <button class="click-to-play" hidden>
+        <span class="big-flag"></span>
+        <span>Click to play</span>
+      </button>
+      <p id="error" class="error" hidden></p>
+    </div>
+  </div>
+
+  <script src="vendor/scaffolding-min.js"></script>
+  <script src="player.js"></script>
+</body>
+</html>

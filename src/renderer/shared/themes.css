@@ -1,0 +1,28 @@
+/* Every color in Flagship comes from these variables, so a theme is just a set of overrides.
+   Custom user themes (v0.3) will be CSS files that redefine these. */
+:root,
+[data-theme="oled"] {
+  --bg: #000000;            /* true black, not gray */
+  --surface: #0b0b0b;
+  --surface-hover: #151515;
+  --border: #1f1f1f;
+  --text: #f2f2f2;
+  --text-dim: #8a8a8a;
+  --accent: #2ee6c8;        /* sea-breeze teal */
+  --accent-text: #001a16;
+  --danger: #ff5c7a;
+  --radius: 12px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+}
+
+[data-theme="mocha"] {
+  --bg: #1e1e2e;
+  --surface: #313244;
+  --surface-hover: #45475a;
+  --border: #45475a;
+  --text: #cdd6f4;
+  --text-dim: #a6adc8;
+  --accent: #94e2d5;
+  --accent-text: #11111b;
+  --danger: #f38ba8;
+}

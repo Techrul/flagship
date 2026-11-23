@@ -1,0 +1,111 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+}
+body { display: flex; flex-direction: column; }
+
+.controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.title {
+  flex: 1;
+  margin: 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.control {
+  height: 34px;
+  min-width: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.control:hover { background: var(--surface-hover); }
+
+/* Generic shapes, not Scratch's artwork. */
+.flag-icon {
+  width: 0; height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: 14px solid #34d058;
+  margin-left: 3px;
+}
+.stop-icon { width: 13px; height: 13px; border-radius: 2px; background: var(--danger); }
+
+.stage-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: #000;
+}
+.stage { position: absolute; inset: 0; }
+
+/* In fullscreen, hide everything but the game. */
+.stage-wrap:fullscreen { background: #000; }
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.72);
+}
+.overlay[hidden] { display: none; }
+
+.loading { display: flex; flex-direction: column; align-items: center; gap: 14px; color: var(--text-dim); }
+.spinner {
+  width: 34px; height: 34px;
+  border: 3px solid var(--surface-hover);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.click-to-play {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 40px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.click-to-play[hidden] { display: none; }
+.big-flag {
+  width: 0; height: 0;
+  border-top: 30px solid transparent;
+  border-bottom: 30px solid transparent;
+  border-left: 56px solid #34d058;
+  transition: transform 0.15s;
+}
+.click-to-play:hover .big-flag { transform: scale(1.08); }
+
+.error { max-width: 460px; padding: 0 24px; text-align: center; color: var(--danger); }

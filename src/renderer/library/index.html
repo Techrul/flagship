@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oled">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' flagship-media: data:; style-src 'self'; script-src 'self'">
+  <title>Flagship</title>
+  <link rel="stylesheet" href="../shared/themes.css">
+  <link rel="stylesheet" href="library.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-flag" aria-hidden="true"></span>
+      <span class="brand-name">Flagship</span>
+    </div>
+    <form id="add-form" class="add-form">
+      <input id="add-input" type="text" autocomplete="off" spellcheck="false"
+             placeholder="Paste a Scratch project link or ID…">
+      <button id="add-button" type="submit">Add game</button>
+    </form>
+    <select id="theme-select" title="Theme">
+      <option value="oled">OLED</option>
+      <option value="mocha">Mocha</option>
+    </select>
+  </header>
+
+  <div id="status" class="status" hidden>
+    <span id="status-text"></span>
+    <div class="progress"><div id="progress-bar"></div></div>
+  </div>
+
+  <main>
+    <div class="section-head">
+      <h1>Library</h1>
+      <span id="count" class="count"></span>
+    </div>
+    <div id="grid" class="grid"></div>
+    <div id="empty" class="empty" hidden>
+      <div class="empty-flag" aria-hidden="true"></div>
+      <h2>Your library is empty</h2>
+      <p>Paste a link like <code>scratch.mit.edu/projects/104</code> up top to add your first game.</p>
+    </div>
+  </main>
+
+  <template id="card-template">
+    <article class="card">
+      <button class="card-art" title="Play">
+        <img alt="" draggable="false">
+        <span class="card-play">▶</span>
+      </button>
+      <div class="card-body">
+        <div class="card-text">
+          <h3 class="card-title"></h3>
+          <p class="card-meta"></p>
+        </div>
+        <button class="card-menu" title="More">⋯</button>
+      </div>
+      <div class="card-dropdown" hidden>
+        <button data-action="scratch">View on Scratch</button>
+        <button data-action="redownload">Re-download</button>
+        <button data-action="remove" class="danger">Remove</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="library.js"></script>
+</body>
+</html>
