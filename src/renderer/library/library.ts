@@ -83,7 +83,10 @@ function renderCard(game: Game): HTMLElement {
 
   card.querySelector('.card-title')!.textContent = game.title;
   (card.querySelector('.card-title') as HTMLElement).title = game.title;
-  card.querySelector('.card-meta')!.textContent = `by ${game.author} · ${formatPlaytime(game.playtimeSeconds)}`;
+  const metaText = `by ${game.author} · ${formatPlaytime(game.playtimeSeconds)}`;
+  const meta = card.querySelector<HTMLElement>('.card-meta')!;
+  meta.textContent = metaText;
+  meta.title = metaText; // full text on hover if it gets cut off
 
   const customCount = Object.keys(game.settings ?? {}).length;
   // Badge: the profile, if the game picked one other than the default, plus how many tweaks it has.

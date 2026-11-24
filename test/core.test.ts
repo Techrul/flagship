@@ -132,7 +132,7 @@ test('profiles: create, edit, default, delete; built-ins are protected', () => {
 test('Enhanced turns on exactly the safe improvements', () => {
   const enhanced = BUILT_IN_PROFILES.find((p) => p.id === 'enhanced')!.settings;
   const changed = Object.keys(enhanced).filter((k) => (enhanced as any)[k] !== (DEFAULT_PLAYER_SETTINGS as any)[k]).sort();
-  assert.deepEqual(changed, ['highQualityPen', 'infiniteClones', 'interpolation', 'removeFencing', 'removeMiscLimits', 'warpTimer']);
+  assert.deepEqual(changed, ['highQualityPen', 'infiniteClones', 'interpolation', 'pauseButton', 'removeFencing', 'removeMiscLimits', 'warpTimer']);
 });
 
 test('migration from v0.2: untouched defaults move to Enhanced', () => {

@@ -11,8 +11,15 @@
 </head>
 <body>
   <header class="controls">
-    <button id="flag" class="control" title="Green flag (restart)"><span class="flag-icon"></span></button>
-    <button id="stop" class="control" title="Stop"><span class="stop-icon"></span></button>
+    <button id="flag" class="control" title="Green flag (start / restart)" aria-label="Green flag">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path class="flag-pole" d="M4 2.5v15" /><path class="flag-cloth" d="M5 3.2c2.6-1.4 5 1.4 9.6-.2v7.4c-4.6 1.6-7-1.2-9.6.2z" /></svg>
+    </button>
+    <button id="pause" class="control" title="Pause" aria-label="Pause" hidden>
+      <svg viewBox="0 0 20 20" aria-hidden="true"><rect class="icon-fill" x="5" y="4" width="3.4" height="12" rx="1" /><rect class="icon-fill" x="11.6" y="4" width="3.4" height="12" rx="1" /></svg>
+    </button>
+    <button id="stop" class="control" title="Stop" aria-label="Stop">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><rect class="stop-fill" x="4.5" y="4.5" width="11" height="11" rx="2" /></svg>
+    </button>
     <h1 id="title" class="title">Loading…</h1>
     <button id="fullscreen" class="control wide" title="Fullscreen (F11)">⛶ Fullscreen</button>
   </header>
@@ -25,9 +32,18 @@
         <span id="loading-text">Loading game…</span>
       </div>
       <button class="click-to-play" hidden>
-        <span class="big-flag"></span>
-        <span>Click to play</span>
+        <span class="play-circle">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.6v12.8a1 1 0 0 0 1.5.86l10.2-6.4a1 1 0 0 0 0-1.72L10 4.74a1 1 0 0 0-1.5.86z" /></svg>
+        </span>
+        <span class="play-label">Click to play</span>
       </button>
+      <div id="paused" class="paused-panel" hidden>
+        <p class="paused-title">Paused</p>
+        <button id="resume" class="resume-button" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.6v12.8a1 1 0 0 0 1.5.86l10.2-6.4a1 1 0 0 0 0-1.72L10 4.74a1 1 0 0 0-1.5.86z" /></svg>
+          Resume
+        </button>
+      </div>
       <p id="error" class="error" hidden></p>
     </div>
   </div>

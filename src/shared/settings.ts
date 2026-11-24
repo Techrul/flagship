@@ -16,6 +16,7 @@ export interface PlayerSettings {
   cloudSaves: boolean;
   gamepad: boolean;
   pointerLock: boolean;
+  pauseButton: boolean;
   autoplay: boolean;
 }
 
@@ -35,6 +36,7 @@ export const DEFAULT_PLAYER_SETTINGS: PlayerSettings = {
   cloudSaves: true,
   gamepad: false,
   pointerLock: false,
+  pauseButton: false,
   autoplay: false,
 };
 
@@ -50,6 +52,7 @@ export const ENHANCED_PLAYER_SETTINGS: PlayerSettings = {
   infiniteClones: true,
   removeFencing: true,
   removeMiscLimits: true,
+  pauseButton: true,
 };
 
 /** A named set of player settings. Games use one profile, plus optional per-game overrides. */
@@ -66,7 +69,7 @@ export const BUILT_IN_PROFILES: readonly Profile[] = [
     id: 'enhanced',
     name: 'Enhanced',
     builtIn: true,
-    description: 'Recommended. Smoother motion, sharper pen, and Scratch\'s limits removed. Works with almost every game.',
+    description: 'Recommended. Smoother motion, sharper pen, Scratch\'s limits removed, and a pause button. Works with almost every game.',
     settings: ENHANCED_PLAYER_SETTINGS,
   },
   {
@@ -106,7 +109,7 @@ export function resolveProfile(settings: Pick<AppSettings, 'profiles' | 'default
 /** Settings that can change while a game is running without restarting it. */
 export const LIVE_SETTINGS: ReadonlyArray<keyof PlayerSettings> = [
   'framerate', 'interpolation', 'turbo', 'highQualityPen',
-  'infiniteClones', 'removeFencing', 'removeMiscLimits',
+  'infiniteClones', 'removeFencing', 'removeMiscLimits', 'pauseButton',
 ];
 
 type SettingInfo = {
@@ -210,6 +213,10 @@ export const PLAYER_SETTING_GROUPS: SettingGroup[] = [
       {
         key: 'pointerLock', type: 'toggle', label: 'Lock mouse',
         description: 'Locks the mouse inside the game, for 3D and first-person games. Press Esc to get your mouse back.',
+      },
+      {
+        key: 'pauseButton', type: 'toggle', label: 'Pause button',
+        description: 'Adds a pause button next to the green flag. Pausing freezes everything (scripts, timers and sound) and picks up exactly where you left off. Scratch itself has no pause.',
       },
       {
         key: 'autoplay', type: 'toggle', label: 'Skip "Click to play"',

@@ -39,6 +39,9 @@ function applyLiveSettings(scaffolding: any, s: PlayerSettings, username: string
     miscLimits: !s.removeMiscLimits,
   });
   scaffolding.setUsername(username);
+  $('pause').hidden = !s.pauseButton;
+  // Turning the pause button off while paused would leave the game stuck, so resume first.
+  if (!s.pauseButton && vm.isPaused?.()) vm.setPaused(false);
   (window as any).__flagshipSettings = { ...s, username }; // read by the smoke test
 }
 
@@ -77,7 +80,7 @@ async function main() {
     pointerlock: settings.pointerLock,
     specialCloudBehaviors: false,
     unsafeCloudBehaviors: false, // never let a game run arbitrary JavaScript
-    pause: false,
+    pause: true, // adds vm.setPaused(); the button only shows if the profile's "Pause button" is on
   });
 
   // Settings edited in the library while this game is open.
@@ -96,11 +99,46 @@ async function main() {
     return showError(`Couldn't load this game: ${(error as Error).message}. Try re-downloading it from the library.`);
   }
 
+  let started = false;
+  const pausedPanel = $<HTMLDivElement>('paused');
+  const pauseButton = $<HTMLButtonElement>('pause');
+  const vm = scaffolding.vm;
+  (window as any).__flagshipVm = vm; // for debugging in DevTools and the smoke test
+
   const start = () => {
+    if (started) return;
+    started = true;
     overlay.hidden = true;
+    playButton.hidden = true;
+    pauseButton.disabled = false;
+    document.removeEventListener('keydown', startKeys);
     scaffolding.start(); // starts the VM and runs "when flag clicked" scripts
     state('running');
   };
+  const startKeys = (event: KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      start();
+    }
+  };
+
+  // ----- pause -----
+  // The UI follows the VM's own events, so anything that unpauses (like the green flag) updates it too.
+  const showPaused = (paused: boolean) => {
+    pausedPanel.hidden = !paused;
+    overlay.hidden = !paused;
+    pauseButton.classList.toggle('active', paused);
+    pauseButton.title = paused ? 'Resume' : 'Pause';
+    pauseButton.setAttribute('aria-label', paused ? 'Resume' : 'Pause');
+    if (started) state(paused ? 'paused' : 'running');
+  };
+  vm.runtime.on('RUNTIME_PAUSED', () => showPaused(true));
+  vm.runtime.on('RUNTIME_UNPAUSED', () => showPaused(false));
+  pauseButton.disabled = true; // nothing to pause until the game starts
+  pauseButton.addEventListener('click', () => {
+    if (started) vm.setPaused(!vm.isPaused());
+  });
+  $('resume').addEventListener('click', () => vm.setPaused(false));
 
   if (settings.autoplay) {
     start();
@@ -109,15 +147,18 @@ async function main() {
     state('ready');
     loading.hidden = true;
     playButton.hidden = false;
-    playButton.focus();
     playButton.addEventListener('click', start, { once: true });
+    document.addEventListener('keydown', startKeys); // Enter/Space also start, without a focus box
   }
 
   $('flag').addEventListener('click', () => {
-    if (!overlay.hidden) return start();
-    scaffolding.greenFlag();
+    if (!started) return start();
+    scaffolding.greenFlag(); // also unpauses
   });
-  $('stop').addEventListener('click', () => scaffolding.stopAll());
+  $('stop').addEventListener('click', () => {
+    if (vm.isPaused()) vm.setPaused(false); // stopping a paused game shouldn't leave it frozen
+    scaffolding.stopAll();
+  });
 
   const toggleFullscreen = () => {
     if (document.fullscreenElement) document.exitFullscreen();

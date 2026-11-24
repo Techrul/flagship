@@ -96,15 +96,46 @@ export async function runSmokeTest(ctx: {
   log('menu after:', await js(`document.getElementById('menu-status').textContent`));
   await shot(win, 'settings-about');
 
-  // Player gets Vanilla + interpolation
+  // Card hover: move the real mouse over the first card's art.
+  await js(`document.getElementById('nav-library').click()`);
+  await wait(300);
+  const box = await js(`(() => { const r = document.querySelector('.card-art').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
+  win.webContents.sendInputEvent({ type: 'mouseMove', x: Math.round(box.x), y: Math.round(box.y) });
+  await wait(500);
+  await shot(win, 'card-hover');
+
+  // Player on Enhanced (pause button on): click-to-play screen, then pause/resume.
+  ctx.library.setConfig('104', { profile: 'enhanced', overrides: {} });
   const player = ctx.openPlayer('104');
-  await wait(4000);
-  await player.webContents.executeJavaScript(`document.querySelector('.click-to-play')?.click()`);
-  await wait(2000);
-  await shot(player, 'player');
-  log('player:', await player.webContents.executeJavaScript(`window.__flagshipState`),
-    JSON.stringify(await player.webContents.executeJavaScript(
-      `(() => { const s = window.__flagshipSettings; return { interpolation: s.interpolation, highQualityPen: s.highQualityPen, turbo: s.turbo }; })()`)));
+  const pjs = (code: string) => player.webContents.executeJavaScript(code);
+  for (let i = 0; i < 60 && (await pjs(`window.__flagshipState || ''`)) !== 'ready'; i++) await wait(250);
+  await wait(1500); // let the software renderer catch up before the screenshot
+  log('loading spinner hidden on click-to-play screen:', await pjs(`getComputedStyle(document.getElementById('loading')).display === 'none'`));
+  await shot(player, 'player-click-to-play');
+  await pjs(`document.querySelector('.click-to-play').click()`);
+  await wait(1500);
+  log('pause button visible:', await pjs(`!document.getElementById('pause').hidden`), 'state:', await pjs(`window.__flagshipState`));
+  const dir = () => pjs(`window.__flagshipVm.runtime.targets.find(t => !t.isStage).direction`);
+  await pjs(`document.getElementById('pause').click()`);
+  await wait(400);
+  log('after pause:', await pjs(`window.__flagshipState`), '| vm.isPaused():', await pjs(`window.__flagshipVm.isPaused()`));
+  await shot(player, 'player-paused');
+  const d1 = await dir();
+  await wait(800);
+  const d2 = await dir();
+  log('sprite direction while paused (must match):', d1, d2);
+  await pjs(`document.getElementById('resume').click()`);
+  await wait(400);
+  log('after resume:', await pjs(`window.__flagshipState`), 'panel hidden:', await pjs(`document.getElementById('paused').hidden`));
+  const d3 = await dir();
+  await wait(500);
+  log('sprite direction after resume (must change):', d3, await dir());
+  await pjs(`document.getElementById('pause').click()`);
+  await wait(300);
+  await pjs(`document.getElementById('flag').click()`);
+  await wait(400);
+  log('green flag while paused ->', await pjs(`window.__flagshipState`));
+  await shot(player, 'player-running');
   player.close();
   await wait(500);
 }

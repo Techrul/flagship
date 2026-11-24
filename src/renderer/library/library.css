@@ -180,25 +180,43 @@ main { padding: 24px 28px 48px; }
 .card-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .card-art img.missing { visibility: hidden; }
 
+.card-art img { transition: transform 0.25s ease; }
+.card-art:hover img, .card-art:focus-visible img { transform: scale(1.04); }
+
+/* Darkens the art on hover so the play button reads clearly without covering much of it. */
+.card-scrim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.15) 70%);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
 .card-play {
   position: absolute;
   inset: 0;
   margin: auto;
-  width: 54px;
-  height: 54px;
+  width: 52px;
+  height: 52px;
   display: grid;
   place-items: center;
-  padding-left: 4px;
   border-radius: 50%;
   background: var(--accent);
-  color: var(--accent-text);
-  font-size: 22px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.5);
   opacity: 0;
   transform: scale(0.85);
-  transition: opacity 0.15s, transform 0.15s;
+  transition: opacity 0.18s ease, transform 0.18s ease;
 }
-.card-art:hover .card-play,
-.card-art:focus-visible .card-play { opacity: 1; transform: scale(1); }
+.card-play svg {
+  width: 24px;
+  height: 24px;
+  fill: var(--accent-text);
+  transform: translateX(2px); /* optical centering for a triangle */
+}
+.card-art:hover .card-scrim, .card-art:focus-visible .card-scrim { opacity: 1; }
+.card-art:hover .card-play, .card-art:focus-visible .card-play { opacity: 1; transform: scale(1); }
+.card-art:active .card-play { transform: scale(0.94); }
+.card-art:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 .card-body { display: flex; align-items: flex-start; gap: 8px; padding: 12px 12px 14px 14px; }
 .card-text { flex: 1; min-width: 0; }
@@ -210,7 +228,14 @@ main { padding: 24px 28px 48px; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.card-meta { margin: 0; font-size: 13px; color: var(--text-dim); }
+.card-meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;      /* one line: "by X · 2 min played", never wrapping mid-phrase */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .card-menu {
   flex-shrink: 0;

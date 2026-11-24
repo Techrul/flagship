@@ -11,11 +11,12 @@ A game launcher for Scratch games. Paste a project link, and Flagship downloads 
 - Library grid with thumbnails and playtime tracking
 - Cloud-variable saves are kept on your computer, per game
 - **Setting profiles**: every TurboWarp option (FPS, interpolation, turbo, compiler, clone limits, stage size, controller support, mouse lock…) explained in plain English, saved as named profiles
-  - **Enhanced** (default): interpolation, HQ pen, warp timer, infinite clones, no fencing, no misc limits — better than vanilla and almost never breaks a game
+  - **Enhanced** (default): interpolation, HQ pen, warp timer, infinite clones, no fencing, no misc limits, pause button — better than vanilla and almost never breaks a game
   - **Vanilla**: exactly like Scratch
   - Make as many of your own as you want, and pick any of them as the default
 - Pick a profile when adding a game, change it later, and tweak individual settings per game
 - **11 built-in themes** (true-black OLED by default), a custom accent color, and **custom themes** — drop a CSS file in the themes folder
+- **Pause button**: freezes scripts, timers and sound, then resumes exactly where you left off
 - **Built-in updates**: Flagship checks GitHub on launch and updates itself with one click
 
 ## Custom themes
