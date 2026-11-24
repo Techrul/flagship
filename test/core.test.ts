@@ -258,3 +258,40 @@ test('updater: explains when it isn\'t a git clone', async () => {
   const info = await new Updater(fs.mkdtempSync(path.join(os.tmpdir(), 'flagship-nogit-'))).check();
   assert.equal(info.supported, false);
 });
+
+// ---------- app menu shortcut ----------
+import { DesktopEntry } from '../src/main/desktop-entry';
+
+test('app menu: .desktop file launches this copy, quotes paths, and installs/removes cleanly', { skip: process.platform !== 'linux' }, () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'flagship-xdg-'));
+  const old = process.env.XDG_DATA_HOME;
+  process.env.XDG_DATA_HOME = home;
+  try {
+    const entry = new DesktopEntry('/home/me/My Games/flagship', '/home/me/My Games/flagship/node_modules/electron/dist/electron');
+    const text = entry.linuxEntry();
+    assert.match(text, /^Exec="\/home\/me\/My Games\/flagship\/node_modules\/electron\/dist\/electron" "\/home\/me\/My Games\/flagship"$/m);
+    assert.match(text, /^StartupWMClass=flagship$/m);
+    assert.match(text, /^Icon=\/home\/me\/My Games\/flagship\/assets\/icon\.png$/m);
+
+    let status = entry.status();
+    assert.ok(status.supported && !status.installed);
+    status = entry.install();
+    assert.ok(status.supported && status.installed && !status.stale);
+    assert.equal(fs.readFileSync(path.join(home, 'applications', 'flagship.desktop'), 'utf8'), text);
+
+    // Moving the folder makes the old shortcut stale.
+    const moved = new DesktopEntry('/elsewhere/flagship', '/elsewhere/flagship/node_modules/electron/dist/electron');
+    const movedStatus = moved.status();
+    assert.ok(movedStatus.supported && movedStatus.stale);
+
+    status = entry.remove();
+    assert.ok(status.supported && !status.installed);
+  } finally {
+    if (old === undefined) delete process.env.XDG_DATA_HOME; else process.env.XDG_DATA_HOME = old;
+  }
+});
+
+test('app menu: special characters in paths are escaped', () => {
+  const entry = new DesktopEntry('/tmp/we"ird$path', '/usr/bin/electron');
+  assert.match(entry.linuxEntry(), /Exec="\/usr\/bin\/electron" "\/tmp\/we\\"ird\\\$path"/);
+});

@@ -9,6 +9,7 @@ import { SettingsStore } from './settings-store';
 import { CustomThemes } from './custom-themes';
 import { effectiveSettings, resolveProfile } from '../shared/settings';
 import { Updater, UpdateError } from './updater';
+import { DesktopEntry } from './desktop-entry';
 
 // Serves cached thumbnails to the UI as flagship-media://thumb/<id>
 protocol.registerSchemesAsPrivileged([
@@ -20,6 +21,11 @@ let library: Library;
 let settings: SettingsStore;
 let customThemes: CustomThemes;
 let updater: Updater;
+let desktopEntry: DesktopEntry;
+const ICON = path.join(app.getAppPath(), 'assets', 'icon.png');
+
+// Windows groups taskbar windows by this id; it must match the Start Menu shortcut.
+if (process.platform === 'win32') app.setAppUserModelId('com.techrul.flagship');
 let updating = false;
 let libraryWindow: BrowserWindow | null = null;
 const playerWindows = new Map<string, BrowserWindow>();
@@ -32,6 +38,7 @@ function createLibraryWindow(): BrowserWindow {
     minHeight: 480,
     backgroundColor: '#000000',
     title: 'Flagship',
+    icon: ICON,
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -65,6 +72,7 @@ function openPlayer(id: string): BrowserWindow {
     height: 760,
     backgroundColor: '#000000',
     title: game.title,
+    icon: ICON,
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -193,6 +201,18 @@ function registerIpc(): void {
 
   ipcMain.handle('app:version', () => app.getVersion());
 
+  // ----- app menu shortcut -----
+  const menuAction = (fn: () => unknown) => {
+    try {
+      return { ok: true, result: fn() };
+    } catch (error) {
+      return { ok: false, error: `Couldn't change the app menu shortcut: ${(error as Error).message}` };
+    }
+  };
+  ipcMain.handle('menu:status', () => menuAction(() => desktopEntry.status()));
+  ipcMain.handle('menu:install', () => menuAction(() => desktopEntry.install()));
+  ipcMain.handle('menu:remove', () => menuAction(() => desktopEntry.remove()));
+
   // ----- custom themes -----
   ipcMain.handle('themes:list', () => customThemes.list());
   ipcMain.handle('themes:open-folder', () => shell.openPath(customThemes.dir));
@@ -231,6 +251,7 @@ app.whenReady().then(async () => {
   settings = new SettingsStore(app.getPath('userData'));
   customThemes = new CustomThemes(path.join(app.getPath('userData'), 'themes'));
   updater = new Updater(app.getAppPath());
+  desktopEntry = new DesktopEntry(app.getAppPath(), process.execPath);
   registerIpc();
   registerMediaProtocol();
   libraryWindow = createLibraryWindow();

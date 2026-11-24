@@ -43,6 +43,9 @@ npm install
 npm start
 ```
 
+To open Flagship like a normal app, go to **Settings → Updates & about → Add to app menu**
+(Linux and Windows). It launches your clone, so updates keep working.
+
 After that, Flagship updates itself: when there's a new version, a banner shows up with an **Update now** button
 (or go to Settings → Updates & about). You can also update by hand with `git pull` then `npm start`.
 

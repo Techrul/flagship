@@ -66,6 +66,7 @@ export async function initSettings(opts: { onClose(): void; onChange(): void }):
 
   initProfileButtons();
   initUpdates();
+  initAppMenu();
   api.getVersion().then((v) => { $('app-version').textContent = `v${v}`; });
   return current;
 }
@@ -318,4 +319,36 @@ function initUpdates(): void {
     updateDismissed = true;
     $('update-banner').hidden = true;
   });
+}
+
+// ---------- App menu shortcut ----------
+
+function showMenuStatus(res: Awaited<ReturnType<typeof api.getMenuStatus>>): void {
+  const add = $<HTMLButtonElement>('menu-add');
+  const remove = $<HTMLButtonElement>('menu-remove');
+  const text = $('menu-status');
+  add.hidden = true;
+  remove.hidden = true;
+  if (!res.ok) { text.textContent = res.error; add.hidden = false; return; }
+  const s = res.result;
+  if (!s.supported) { text.textContent = s.reason; return; }
+  if (!s.installed) {
+    text.textContent = 'Add Flagship to your app menu so you can open it like any other app. It runs this copy, so updates keep working.';
+    add.hidden = false;
+    add.textContent = 'Add to app menu';
+  } else if (s.stale) {
+    text.textContent = 'Your app menu shortcut points to an old location (did you move the Flagship folder?). Fix it to open this copy.';
+    add.hidden = false;
+    add.textContent = 'Fix shortcut';
+    remove.hidden = false;
+  } else {
+    text.textContent = 'Flagship is in your app menu. ✓';
+    remove.hidden = false;
+  }
+}
+
+function initAppMenu(): void {
+  api.getMenuStatus().then(showMenuStatus);
+  $('menu-add').addEventListener('click', async () => showMenuStatus(await api.addToMenu()));
+  $('menu-remove').addEventListener('click', async () => showMenuStatus(await api.removeFromMenu()));
 }

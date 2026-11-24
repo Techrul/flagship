@@ -1,6 +1,7 @@
 // Types for window.flagship (see src/main/preload.ts).
 import type { AppSettings, PlayerSettings } from '../../shared/settings';
 import type { UpdateCheck } from '../../main/updater';
+import type { MenuStatus } from '../../main/desktop-entry';
 import type { CustomThemeInfo } from '../../shared/themes';
 
 export interface Game {
@@ -41,6 +42,9 @@ export interface FlagshipApi {
   checkForUpdates(): Promise<Result<UpdateCheck>>;
   applyUpdate(): Promise<Result<{ from: string; to: string }>>;
   getVersion(): Promise<string>;
+  getMenuStatus(): Promise<Result<MenuStatus>>;
+  addToMenu(): Promise<Result<MenuStatus>>;
+  removeFromMenu(): Promise<Result<MenuStatus>>;
   onUpdateProgress(callback: (stage: string) => void): void;
   listCustomThemes(): Promise<CustomThemeInfo[]>;
   openThemesFolder(): Promise<void>;

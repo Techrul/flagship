@@ -90,6 +90,11 @@ export async function runSmokeTest(ctx: {
   await wait(300);
   await shot(win, 'settings-about');
   log('update status:', await js(`document.getElementById('update-status').textContent`));
+  log('menu before:', await js(`document.getElementById('menu-status').textContent`));
+  await js(`document.getElementById('menu-add').click()`);
+  await wait(600);
+  log('menu after:', await js(`document.getElementById('menu-status').textContent`));
+  await shot(win, 'settings-about');
 
   // Player gets Vanilla + interpolation
   const player = ctx.openPlayer('104');

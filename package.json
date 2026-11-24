@@ -1,6 +1,6 @@
 {
   "name": "flagship",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A launcher for Scratch games, powered by TurboWarp. Not affiliated with the Scratch Team.",
   "main": "dist/main/main.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "build:dev": "node scripts/build.mjs --dev",
     "start": "node scripts/build.mjs --dev && electron .",
     "typecheck": "tsc",
-    "test": "esbuild test/core.test.ts --bundle --platform=node --format=cjs --outfile=.test-build/core.test.cjs --log-level=warning && node --test .test-build/core.test.cjs"
+    "test": "esbuild test/core.test.ts --bundle --platform=node --format=cjs --external:electron --outfile=.test-build/core.test.cjs --log-level=warning && node --test .test-build/core.test.cjs"
   },
   "author": "Techrul",
   "license": "MIT",
