@@ -112,6 +112,12 @@ export async function runSmokeTest(ctx: {
   await wait(1500); // let the software renderer catch up before the screenshot
   log('loading spinner hidden on click-to-play screen:', await pjs(`getComputedStyle(document.getElementById('loading')).display === 'none'`));
   await shot(player, 'player-click-to-play');
+  const centerOff = (sel: string) => pjs(`(() => {
+    const a = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect();
+    const b = document.getElementById('stage-wrap').getBoundingClientRect();
+    return [Math.round(a.x + a.width / 2 - (b.x + b.width / 2)), Math.round(a.y + a.height / 2 - (b.y + b.height / 2))];
+  })()`);
+  log('play circle offset from stage center [x, y] px:', await centerOff('.play-circle'));
   await pjs(`document.querySelector('.click-to-play').click()`);
   await wait(1500);
   log('pause button visible:', await pjs(`!document.getElementById('pause').hidden`), 'state:', await pjs(`window.__flagshipState`));
@@ -120,6 +126,7 @@ export async function runSmokeTest(ctx: {
   await wait(400);
   log('after pause:', await pjs(`window.__flagshipState`), '| vm.isPaused():', await pjs(`window.__flagshipVm.isPaused()`));
   await shot(player, 'player-paused');
+  log('resume button offset from stage center [x, y] px:', await centerOff('#resume'));
   const d1 = await dir();
   await wait(800);
   const d2 = await dir();

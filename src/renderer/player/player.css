@@ -90,10 +90,10 @@ body { display: flex; flex-direction: column; }
 
 /* ---------- click to play ---------- */
 .click-to-play {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
+  /* The button is just the circle, so the circle lands on the exact center of the game.
+     The label hangs below it without pushing it up. */
+  position: relative;
+  display: block;
   padding: 0;
   border: none;
   outline: none;
@@ -119,6 +119,11 @@ body { display: flex; flex-direction: column; }
   transform: translateX(3px); /* a triangle looks off-center when it's mathematically centered */
 }
 .play-label {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
   font-size: 15px;
   font-weight: 650;
   letter-spacing: 0.2px;
@@ -132,8 +137,14 @@ body { display: flex; flex-direction: column; }
 }
 
 /* ---------- paused ---------- */
-.paused-panel { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+/* Same idea for the paused screen: Resume sits dead center, "Paused" floats above it. */
+.paused-panel { position: relative; }
 .paused-title {
+  position: absolute;
+  bottom: calc(100% + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
   margin: 0;
   font-size: 30px;
   font-weight: 800;
