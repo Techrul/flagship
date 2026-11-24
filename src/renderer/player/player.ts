@@ -27,7 +27,7 @@ function showError(message: string) {
 }
 
 /** Settings that can be changed while the game runs. */
-function applyLiveSettings(scaffolding: any, s: PlayerSettings) {
+function applyLiveSettings(scaffolding: any, s: PlayerSettings, username: string) {
   const vm = scaffolding.vm;
   vm.setFramerate(s.framerate);
   vm.setInterpolation(s.interpolation);
@@ -38,8 +38,8 @@ function applyLiveSettings(scaffolding: any, s: PlayerSettings) {
     fencing: !s.removeFencing,
     miscLimits: !s.removeMiscLimits,
   });
-  scaffolding.setUsername(s.username);
-  (window as any).__flagshipSettings = s; // read by the smoke test
+  scaffolding.setUsername(username);
+  (window as any).__flagshipSettings = { ...s, username }; // read by the smoke test
 }
 
 async function main() {
@@ -63,7 +63,8 @@ async function main() {
 
   // Must be set before the project loads, since it decides how scripts get compiled.
   scaffolding.vm.setCompilerOptions({ enabled: settings.compiler, warpTimer: settings.warpTimer });
-  applyLiveSettings(scaffolding, settings);
+  let username = appSettings.username;
+  applyLiveSettings(scaffolding, settings, username);
 
   // Many Scratch games keep their saves in cloud variables; this keeps them on this computer, per game.
   if (settings.cloudSaves) {
@@ -80,8 +81,8 @@ async function main() {
   });
 
   // Settings edited in the library while this game is open.
-  const refresh = async () => applyLiveSettings(scaffolding, await api.getEffectiveSettings(id));
-  api.onSettingsChanged(refresh);
+  const refresh = async () => applyLiveSettings(scaffolding, await api.getEffectiveSettings(id), username);
+  api.onSettingsChanged((s) => { username = s.username; refresh(); });
   api.onGameSettingsChanged((p) => { if (p.id === id) refresh(); });
 
   scaffolding.storage.onprogress = (total: number, loaded: number) => {

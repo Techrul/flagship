@@ -8,8 +8,12 @@ export interface FormOptions {
   values: PlayerSettings;
   /** Per-game mode: the global defaults. Rows that differ get a "Custom" badge and a reset button. */
   defaults?: PlayerSettings;
+  /** Per-game mode: label for the defaults line, e.g. the profile name. */
+  defaultsLabel?: string;
   /** Per-game mode: which keys this game overrides. */
   overridden?: ReadonlySet<Key>;
+  /** Read-only (built-in profiles): shows the values but nothing can be changed. */
+  disabled?: boolean;
   onChange(key: Key, value: PlayerSettings[Key]): void;
   onReset?(key: Key): void;
 }
@@ -24,8 +28,7 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, t
 function describeValue(key: Key, value: PlayerSettings[Key]): string {
   if (typeof value === 'boolean') return value ? 'On' : 'Off';
   if (key === 'framerate') return `${value} FPS`;
-  if (typeof value === 'number') return `${value}px`;
-  return value ? `"${value}"` : 'empty';
+  return `${value}px`;
 }
 
 export function renderSettingsForm(container: HTMLElement, options: FormOptions): void {
@@ -52,7 +55,7 @@ export function renderSettingsForm(container: HTMLElement, options: FormOptions)
       if (isCustom) labelLine.append(el('span', 'custom-badge', 'Custom'));
       text.append(labelLine, el('p', 'setting-description', info.description));
       if (perGame && options.defaults) {
-        text.append(el('p', 'setting-default', `Default: ${describeValue(key, options.defaults[key])}`));
+        text.append(el('p', 'setting-default', `${options.defaultsLabel ?? 'Default'}: ${describeValue(key, options.defaults[key])}`));
       }
 
       const control = el('div', 'setting-control');
@@ -95,16 +98,6 @@ export function renderSettingsForm(container: HTMLElement, options: FormOptions)
         });
         control.append(input);
         if (info.unit) control.append(el('span', 'unit', info.unit));
-      } else {
-        const input = el('input', 'text-input');
-        input.type = 'text';
-        input.id = inputId;
-        input.maxLength = info.maxLength;
-        input.placeholder = info.placeholder ?? '';
-        input.value = String(value);
-        input.spellcheck = false;
-        input.addEventListener('change', () => options.onChange(key, input.value.trim()));
-        control.append(input);
       }
 
       if (isCustom && options.onReset) {
@@ -115,6 +108,9 @@ export function renderSettingsForm(container: HTMLElement, options: FormOptions)
         control.append(reset);
       }
 
+      if (options.disabled) {
+        control.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select').forEach((c) => { c.disabled = true; });
+      }
       row.append(text, control);
       section.append(row);
     }

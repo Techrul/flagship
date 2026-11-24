@@ -2,7 +2,7 @@
 
 A game launcher for Scratch games. Paste a project link, and Flagship downloads it, keeps a local copy, and plays it with [TurboWarp](https://turbowarp.org/)'s fast player — no browser tab needed.
 
-> **Status:** early beta (v0.2). Expect things to break.
+> **Status:** early beta (v0.3). Expect things to break.
 
 ## Features
 
@@ -10,9 +10,13 @@ A game launcher for Scratch games. Paste a project link, and Flagship downloads 
 - Games are cached locally, so they keep working even if they get unshared
 - Library grid with thumbnails and playtime tracking
 - Cloud-variable saves are kept on your computer, per game
-- **Settings** for every TurboWarp option (FPS, interpolation, turbo, compiler, clone limits, stage size, username, controller support, mouse lock…), each explained in plain English
-- **Per-game settings**: override any option for one game; everything else follows your defaults
-- **10 built-in themes** (true-black OLED by default), a custom accent color, and **custom themes** — drop a CSS file in the themes folder
+- **Setting profiles**: every TurboWarp option (FPS, interpolation, turbo, compiler, clone limits, stage size, controller support, mouse lock…) explained in plain English, saved as named profiles
+  - **Enhanced** (default): interpolation, HQ pen, warp timer, infinite clones, no fencing, no misc limits — better than vanilla and almost never breaks a game
+  - **Vanilla**: exactly like Scratch
+  - Make as many of your own as you want, and pick any of them as the default
+- Pick a profile when adding a game, change it later, and tweak individual settings per game
+- **11 built-in themes** (true-black OLED by default), a custom accent color, and **custom themes** — drop a CSS file in the themes folder
+- **Built-in updates**: Flagship checks GitHub on launch and updates itself with one click
 
 ## Custom themes
 
@@ -22,19 +26,25 @@ Settings → Appearance → **Open folder**. Copy `example.css`, rename it, chan
 
 | Version | Focus |
 |---|---|
-| v0.2 | ✅ Settings, per-game TurboWarp settings, themes · next: notes & save-code vault, collections |
+| v0.2 | ✅ Settings, per-game TurboWarp settings, themes |
+| v0.3 | ✅ Setting profiles, Enhanced default, built-in updater · next: notes & save-code vault, collections |
 | v0.3 | Search Scratch, curated recommendations, studio import, custom themes |
 | v0.4 | Big picture mode, controller navigation, verified controller presets |
 | Later | Save states, plugins, maybe itch.io |
 
 ## Running from source
 
-Needs [Node.js](https://nodejs.org/) 22+.
+Needs [Node.js](https://nodejs.org/) 22+ and git.
 
 ```sh
+git clone https://github.com/Techrul/flagship
+cd flagship
 npm install
 npm start
 ```
+
+After that, Flagship updates itself: when there's a new version, a banner shows up with an **Update now** button
+(or go to Settings → Updates & about). You can also update by hand with `git pull` then `npm start`.
 
 `npm test` runs the tests, `npm run build` makes a production build.
 

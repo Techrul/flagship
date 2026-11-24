@@ -7,7 +7,8 @@ import { downloadProject, downloadThumbnail, fetchMetadata, parseProjectInput, S
 import { runSmokeTest } from './smoke';
 import { SettingsStore } from './settings-store';
 import { CustomThemes } from './custom-themes';
-import { effectiveSettings } from '../shared/settings';
+import { effectiveSettings, resolveProfile } from '../shared/settings';
+import { Updater, UpdateError } from './updater';
 
 // Serves cached thumbnails to the UI as flagship-media://thumb/<id>
 protocol.registerSchemesAsPrivileged([
@@ -18,6 +19,8 @@ const RENDERER_DIR = path.join(__dirname, '..', 'renderer');
 let library: Library;
 let settings: SettingsStore;
 let customThemes: CustomThemes;
+let updater: Updater;
+let updating = false;
 let libraryWindow: BrowserWindow | null = null;
 const playerWindows = new Map<string, BrowserWindow>();
 
@@ -90,7 +93,7 @@ function openPlayer(id: string): BrowserWindow {
 function registerIpc(): void {
   ipcMain.handle('library:list', () => library.list());
 
-  ipcMain.handle('library:add', async (event, input: string) => {
+  ipcMain.handle('library:add', async (event, input: string, profile: string | null = null) => {
     const id = parseProjectInput(String(input));
     if (!id) {
       return { ok: false, error: "That doesn't look like a Scratch project link or ID." };
@@ -105,7 +108,7 @@ function registerIpc(): void {
       progress('Saving');
       const thumbnail = await downloadThumbnail(meta.thumbnailUrl);
       const { thumbnailUrl: _unused, ...rest } = meta;
-      const game = library.add(rest, project, thumbnail);
+      const game = library.add(rest, project, thumbnail, typeof profile === 'string' ? profile : null);
       return { ok: true, game };
     } catch (error) {
       const message = error instanceof ScratchError ? error.message : `Something went wrong: ${(error as Error).message}`;
@@ -134,15 +137,61 @@ function registerIpc(): void {
     return updated;
   });
 
-  ipcMain.handle('game:set-settings', (_event, id: string, overrides: unknown) => {
-    const game = library.setSettings(String(id), overrides);
+  // ----- setting profiles -----
+  const profileAction = (fn: () => unknown) => {
+    try {
+      const result = fn();
+      broadcast('settings:changed', settings.get());
+      return { ok: true, result };
+    } catch (error) {
+      return { ok: false, error: (error as Error).message };
+    }
+  };
+  ipcMain.handle('profiles:create', (_event, name: unknown, copyFrom: unknown) =>
+    profileAction(() => settings.createProfile(name, copyFrom)));
+  ipcMain.handle('profiles:update', (_event, id: unknown, patch: unknown) =>
+    profileAction(() => settings.updateProfile(id, patch)));
+  ipcMain.handle('profiles:delete', (_event, id: unknown) =>
+    profileAction(() => settings.deleteProfile(id)));
+
+  /** config = { profile?: id | null, overrides?: {...} } */
+  ipcMain.handle('game:set-config', (_event, id: string, config: any) => {
+    const game = library.setConfig(String(id), { profile: config?.profile, overrides: config?.overrides });
     if (game) broadcast('game:settings-changed', { id: game.id });
     return game ?? null;
   });
 
-  /** Global defaults merged with the game's overrides: what the player actually uses. */
-  ipcMain.handle('game:effective-settings', (_event, id: string) =>
-    effectiveSettings(settings.get().player, library.get(String(id))?.settings));
+  /** The game's profile merged with its overrides: what the player actually uses. */
+  ipcMain.handle('game:effective-settings', (_event, id: string) => {
+    const game = library.get(String(id));
+    return effectiveSettings(resolveProfile(settings.get(), game?.profile).settings, game?.settings);
+  });
+
+  // ----- updates -----
+  ipcMain.handle('updates:check', async () => {
+    try {
+      return { ok: true, result: await updater.check() };
+    } catch (error) {
+      return { ok: false, error: error instanceof UpdateError ? error.message : `Update check failed: ${(error as Error).message}` };
+    }
+  });
+
+  ipcMain.handle('updates:apply', async (event) => {
+    if (updating) return { ok: false, error: 'An update is already running.' };
+    updating = true;
+    try {
+      const result = await updater.apply((stage) => event.sender.send('updates:progress', stage));
+      event.sender.send('updates:progress', 'Restarting');
+      setTimeout(() => { app.relaunch(); app.exit(0); }, 800);
+      return { ok: true, result };
+    } catch (error) {
+      return { ok: false, error: error instanceof UpdateError ? error.message : `Update failed: ${(error as Error).message}` };
+    } finally {
+      updating = false;
+    }
+  });
+
+  ipcMain.handle('app:version', () => app.getVersion());
 
   // ----- custom themes -----
   ipcMain.handle('themes:list', () => customThemes.list());
@@ -181,12 +230,18 @@ app.whenReady().then(async () => {
   library = new Library(path.join(app.getPath('userData'), 'library'));
   settings = new SettingsStore(app.getPath('userData'));
   customThemes = new CustomThemes(path.join(app.getPath('userData'), 'themes'));
+  updater = new Updater(app.getAppPath());
   registerIpc();
   registerMediaProtocol();
   libraryWindow = createLibraryWindow();
 
   if (process.env.FLAGSHIP_SMOKE) {
-    await runSmokeTest({ library, libraryWindow, openPlayer, outDir: process.env.FLAGSHIP_SMOKE });
+    try {
+      await runSmokeTest({ library, libraryWindow, openPlayer, outDir: process.env.FLAGSHIP_SMOKE });
+    } catch (error) {
+      console.log('[smoke] FAILED:', error);
+      process.exitCode = 1;
+    }
     app.quit();
   }
 

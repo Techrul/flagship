@@ -1,6 +1,11 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; } /* the hidden attribute must beat display:flex/grid below */
 
+html {
+  /* Always reserve the scrollbar's space, so the layout (and the settings button) never jumps sideways. */
+  scrollbar-gutter: stable;
+}
+
 html, body {
   margin: 0;
   height: 100%;
@@ -68,6 +73,18 @@ button, input, select { font: inherit; color: inherit; }
 }
 .add-form input:focus { border-color: var(--accent); }
 .add-form input::placeholder { color: var(--text-dim); }
+
+.add-profile {
+  max-width: 190px;
+  padding: 0 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  outline: none;
+  cursor: pointer;
+}
+.add-profile:hover, .add-profile:focus { color: var(--text); border-color: var(--accent); }
 
 .add-form button {
   padding: 10px 18px;
@@ -452,3 +469,106 @@ input[type="color"]:disabled { opacity: 0.35; cursor: default; }
 .dialog-kicker { margin: 0; color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .dialog-body { padding: 16px 24px; overflow-y: auto; }
 .dialog-foot { display: flex; justify-content: flex-end; padding: 12px 24px; border-top: 1px solid var(--border); }
+
+/* ---------- v0.3: buttons, pills ---------- */
+.primary-button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.primary-button:disabled, .secondary-button:disabled { opacity: 0.5; cursor: default; }
+.link-button { border: none; background: none; color: inherit; opacity: 0.8; cursor: pointer; text-decoration: underline; }
+.danger-text { color: var(--danger); }
+.pill {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 700;
+}
+.pill.accent { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.pill[hidden] { display: none; }
+
+.settings-head .close-button { margin-left: auto; }
+
+/* ---------- update banner ---------- */
+.update-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 28px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+.update-banner span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.update-banner > button:not(.link-button) {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent-text);
+  color: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------- profiles ---------- */
+.profile-bar { display: flex; align-items: flex-start; gap: 12px; margin: 6px 0 16px; }
+.profile-tabs { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; }
+.profile-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text-dim);
+  font-weight: 600;
+  cursor: pointer;
+}
+.profile-tab:hover { color: var(--text); border-color: var(--text-dim); }
+.profile-tab.selected { color: var(--accent-text); background: var(--accent); border-color: var(--accent); }
+.tab-default { font-size: 12px; }
+
+.profile-panel {
+  padding: 16px 18px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+.profile-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.profile-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.settings-card .profile-name-static { margin: 0; font-size: 18px; font-weight: 700; text-transform: none; letter-spacing: 0; color: var(--text); }
+.profile-name-input {
+  width: 240px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 17px;
+  font-weight: 700;
+  outline: none;
+}
+.profile-name-input:focus { border-color: var(--accent); }
+.profile-name-input[hidden], .profile-name-static[hidden] { display: none; }
+.profile-actions { display: flex; gap: 8px; }
+.profile-panel .intro { margin-top: 10px; }
+.profile-panel .settings-group h3 { margin-top: 14px; }
+.setting-control :disabled { opacity: 0.55; cursor: not-allowed; }
+
+.profile-pick { border-top: none; padding-top: 0; }
+.profile-pick select {
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  min-width: 200px;
+}

@@ -14,12 +14,12 @@ export interface PlayerSettings {
   stageWidth: number;
   stageHeight: number;
   cloudSaves: boolean;
-  username: string;
   gamepad: boolean;
   pointerLock: boolean;
   autoplay: boolean;
 }
 
+/** Exactly how Scratch itself runs games. */
 export const DEFAULT_PLAYER_SETTINGS: PlayerSettings = {
   framerate: 30,
   interpolation: false,
@@ -33,30 +33,80 @@ export const DEFAULT_PLAYER_SETTINGS: PlayerSettings = {
   stageWidth: 480,
   stageHeight: 360,
   cloudSaves: true,
-  username: '',
   gamepad: false,
   pointerLock: false,
   autoplay: false,
 };
 
+/**
+ * Better than vanilla while almost never breaking a game: smoother motion, sharper pen,
+ * and Scratch's arbitrary limits removed. This is the default for new installs.
+ */
+export const ENHANCED_PLAYER_SETTINGS: PlayerSettings = {
+  ...DEFAULT_PLAYER_SETTINGS,
+  interpolation: true,
+  highQualityPen: true,
+  warpTimer: true,
+  infiniteClones: true,
+  removeFencing: true,
+  removeMiscLimits: true,
+};
+
+/** A named set of player settings. Games use one profile, plus optional per-game overrides. */
+export interface Profile {
+  id: string;
+  name: string;
+  builtIn: boolean;
+  description: string;
+  settings: PlayerSettings;
+}
+
+export const BUILT_IN_PROFILES: readonly Profile[] = [
+  {
+    id: 'enhanced',
+    name: 'Enhanced',
+    builtIn: true,
+    description: 'Recommended. Smoother motion, sharper pen, and Scratch\'s limits removed. Works with almost every game.',
+    settings: ENHANCED_PLAYER_SETTINGS,
+  },
+  {
+    id: 'vanilla',
+    name: 'Vanilla',
+    builtIn: true,
+    description: 'Exactly like playing on Scratch. Use this if a game acts weird with Enhanced.',
+    settings: DEFAULT_PLAYER_SETTINGS,
+  },
+];
+
 export interface AppSettings {
-  version: 1;
+  version: 2;
   theme: string;               // built-in theme id, or "custom:<file>.css"
   accent: string | null;       // "#rrggbb" to override the theme's accent, or null
-  player: PlayerSettings;      // defaults for every game
+  username: string;            // what the Scratch "username" block returns
+  defaultProfile: string;      // profile id used by games that don't pick one
+  profiles: Profile[];         // built-ins first, then the user's own
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
-  version: 1,
+  version: 2,
   theme: 'oled',
   accent: null,
-  player: { ...DEFAULT_PLAYER_SETTINGS },
+  username: '',
+  defaultProfile: 'enhanced',
+  profiles: [...BUILT_IN_PROFILES],
 };
+
+/** The profile a game uses: its own choice if it still exists, else the default, else Enhanced. */
+export function resolveProfile(settings: Pick<AppSettings, 'profiles' | 'defaultProfile'>, profileId: string | null | undefined): Profile {
+  return settings.profiles.find((p) => p.id === profileId)
+    ?? settings.profiles.find((p) => p.id === settings.defaultProfile)
+    ?? BUILT_IN_PROFILES[0];
+}
 
 /** Settings that can change while a game is running without restarting it. */
 export const LIVE_SETTINGS: ReadonlyArray<keyof PlayerSettings> = [
   'framerate', 'interpolation', 'turbo', 'highQualityPen',
-  'infiniteClones', 'removeFencing', 'removeMiscLimits', 'username',
+  'infiniteClones', 'removeFencing', 'removeMiscLimits',
 ];
 
 type SettingInfo = {
@@ -67,7 +117,6 @@ type SettingInfo = {
   | { type: 'toggle' }
   | { type: 'select'; options: { value: number; label: string }[] }
   | { type: 'number'; min: number; max: number; unit?: string }
-  | { type: 'text'; placeholder?: string; maxLength: number }
 );
 
 export interface SettingGroup {
@@ -141,16 +190,12 @@ export const PLAYER_SETTING_GROUPS: SettingGroup[] = [
     ],
   },
   {
-    title: 'Saves & identity',
+    title: 'Saves',
     blurb: '',
     settings: [
       {
         key: 'cloudSaves', type: 'toggle', label: 'Save cloud variables',
         description: 'Games that save progress with cloud variables (☁) will remember it on this computer. Off means they reset every time.',
-      },
-      {
-        key: 'username', type: 'text', label: 'Username', maxLength: 32, placeholder: 'Nobody',
-        description: 'What the game sees as your Scratch username. Some games greet you by name or save per player with it.',
       },
     ],
   },
@@ -190,7 +235,6 @@ export function sanitizePlayerSettings(input: unknown, partial = false): Partial
     if (typeof fallback === 'number' && typeof value === 'number' && Number.isFinite(value)) {
       out[key] = Math.round(Math.min(4096, Math.max(1, value)));
     }
-    if (typeof fallback === 'string' && typeof value === 'string') out[key] = value.slice(0, 32);
   }
   return out as Partial<PlayerSettings>;
 }

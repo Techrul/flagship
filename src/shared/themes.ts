@@ -11,6 +11,7 @@ export interface ThemeInfo {
 export const BUILT_IN_THEMES: ThemeInfo[] = [
   { id: 'oled', name: 'OLED', preview: ['#000000', '#0b0b0b', '#2ee6c8', '#f2f2f2'] },
   { id: 'midnight', name: 'Midnight', preview: ['#000000', '#0c0a14', '#a78bfa', '#ece9f7'] },
+  { id: 'deep-sea', name: 'Deep Sea', preview: ['#04121a', '#0a2230', '#38e1ff', '#e6f7ff'] },
   { id: 'mocha', name: 'Catppuccin Mocha', preview: ['#1e1e2e', '#313244', '#94e2d5', '#cdd6f4'] },
   { id: 'tokyo-night', name: 'Tokyo Night', preview: ['#1a1b26', '#24283b', '#7aa2f7', '#c0caf5'] },
   { id: 'dracula', name: 'Dracula', preview: ['#282a36', '#343746', '#ff79c6', '#f8f8f2'] },

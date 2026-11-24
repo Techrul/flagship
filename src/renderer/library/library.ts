@@ -1,5 +1,8 @@
 import { api, Game } from '../shared/api';
-import { initSettings, openGameSettings, renderSettingsPage } from './settings-view';
+import { resolveProfile } from '../../shared/settings';
+import {
+  checkForUpdates, fillProfileSelect, getSettings, initSettings, openGameSettings, renderSettingsPage,
+} from './settings-view';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -8,6 +11,7 @@ const empty = $<HTMLDivElement>('empty');
 const count = $<HTMLSpanElement>('count');
 const form = $<HTMLFormElement>('add-form');
 const input = $<HTMLInputElement>('add-input');
+const addProfile = $<HTMLSelectElement>('add-profile');
 const addButton = $<HTMLButtonElement>('add-button');
 const status = $<HTMLDivElement>('status');
 const statusText = $<HTMLSpanElement>('status-text');
@@ -82,9 +86,16 @@ function renderCard(game: Game): HTMLElement {
   card.querySelector('.card-meta')!.textContent = `by ${game.author} · ${formatPlaytime(game.playtimeSeconds)}`;
 
   const customCount = Object.keys(game.settings ?? {}).length;
+  // Badge: the profile, if the game picked one other than the default, plus how many tweaks it has.
+  const settings = getSettings();
+  const explicit = game.profile && settings.profiles.some((p) => p.id === game.profile) && game.profile !== settings.defaultProfile;
+  const parts: string[] = [];
+  if (explicit) parts.push(resolveProfile(settings, game.profile).name);
+  if (customCount) parts.push(explicit ? `+${customCount}` : `${customCount} tweak${customCount === 1 ? '' : 's'}`);
   const badge = card.querySelector<HTMLElement>('.card-badge')!;
-  badge.hidden = customCount === 0;
-  badge.title = `${customCount} custom setting${customCount === 1 ? '' : 's'}`;
+  badge.hidden = parts.length === 0;
+  badge.textContent = parts.join(' ');
+  badge.title = `Profile: ${resolveProfile(settings, game.profile).name}${customCount ? `, ${customCount} setting${customCount === 1 ? '' : 's'} changed for this game` : ''}`;
 
   card.querySelector('.card-art')!.addEventListener('click', () => api.playGame(game.id));
 
@@ -100,7 +111,7 @@ function renderCard(game: Game): HTMLElement {
     const action = (event.target as HTMLElement).dataset.action;
     if (action === 'settings') openGameSettings(game);
     if (action === 'scratch') api.openOnScratch(game.id);
-    if (action === 'redownload') await addGame(game.id);
+    if (action === 'redownload') await addGame(game.id, game.profile);
     if (action === 'remove') {
       // Notes live with the game, so removal is a real loss; confirm first.
       if (confirm(`Remove "${game.title}" from your library? Its notes and cached files will be deleted.`)) {
@@ -122,13 +133,13 @@ async function refresh() {
 
 // ---------- adding ----------
 let busy = false;
-async function addGame(text: string) {
+async function addGame(text: string, profile: string | null) {
   if (busy || !text.trim()) return;
   busy = true;
   addButton.disabled = true;
   showStatus('Looking up project…');
   try {
-    const result = await api.addGame(text);
+    const result = await api.addGame(text, profile);
     if (result.ok) {
       input.value = '';
       showStatus(`Added "${result.game.title}" ✓`, { progress: 1, autoHide: true });
@@ -144,10 +155,19 @@ async function addGame(text: string) {
 
 form.addEventListener('submit', (event) => {
   event.preventDefault();
-  addGame(input.value);
+  addGame(input.value, addProfile.value || null);
 });
 
 api.onLibraryChanged(refresh);
 api.onGameSettingsChanged(refresh);
-initSettings().then(refresh);
-if (location.hash === '#settings') showView('settings'); // used by the smoke test
+initSettings({
+  onClose: () => showView('library'),
+  onChange: () => {
+    fillProfileSelect(addProfile, addProfile.value || null, true);
+    refresh();
+  },
+}).then(() => {
+  fillProfileSelect(addProfile, null, true);
+  refresh();
+  checkForUpdates(true); // quiet: only shows a banner if there's something new
+});

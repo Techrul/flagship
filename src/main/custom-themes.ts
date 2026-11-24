@@ -5,22 +5,22 @@ import type { CustomThemeInfo } from '../shared/themes';
 
 const FILE = /^[\w .-]{1,80}\.css$/;
 
-const EXAMPLE = `/* name: Example (edit me!) */
+const EXAMPLE = `/* name: Example: Ember (edit me!) */
 /*
   Flagship custom theme.
   Copy this file, rename it, change the colors, then pick it in Settings → Appearance.
   Hit "Reload" in Settings after saving changes. The first line sets the name shown in Flagship.
 */
 :root {
-  --bg: #04121a;            /* window background */
-  --surface: #0a2230;       /* cards, inputs, menus */
-  --surface-hover: #113246; /* hovered cards and buttons */
-  --border: #16394d;        /* outlines */
-  --text: #e6f7ff;          /* main text */
-  --text-dim: #7fa6b8;      /* secondary text */
-  --accent: #38e1ff;        /* buttons, highlights */
-  --accent-text: #00141a;   /* text on top of the accent color */
-  --danger: #ff6b8b;        /* remove buttons, errors */
+  --bg: #1a0f0a;            /* window background */
+  --surface: #2a1810;       /* cards, inputs, menus */
+  --surface-hover: #3a2216; /* hovered cards and buttons */
+  --border: #4a2c1c;        /* outlines */
+  --text: #fff1e6;          /* main text */
+  --text-dim: #c49a7f;      /* secondary text */
+  --accent: #ff8a3d;        /* buttons, highlights */
+  --accent-text: #1a0a00;   /* text on top of the accent color */
+  --danger: #ff5c7a;        /* remove buttons, errors */
   --radius: 14px;           /* corner roundness */
 }
 `;

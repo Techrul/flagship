@@ -15,7 +15,8 @@ export interface Game {
   lastPlayedAt: string | null;
   playtimeSeconds: number;
   notes: string;         // save codes and anything else (UI comes in v0.2)
-  settings: Partial<PlayerSettings>; // per-game overrides of the global player settings
+  profile: string | null;            // setting profile id, or null = use the default profile
+  settings: Partial<PlayerSettings>; // per-game overrides on top of the profile
 }
 
 interface LibraryFile {
@@ -24,6 +25,7 @@ interface LibraryFile {
 }
 
 const VALID_ID = /^\d{1,12}$/;
+const PROFILE_ID = /^[a-z0-9-]{1,40}$/;
 
 export class Library {
   private readonly indexPath: string;
@@ -43,6 +45,7 @@ export class Library {
       const parsed = JSON.parse(fs.readFileSync(this.indexPath, 'utf8')) as LibraryFile;
       this.games = (Array.isArray(parsed.games) ? parsed.games : []).map((g) => ({
         ...g,
+        profile: typeof g.profile === 'string' && PROFILE_ID.test(g.profile) ? g.profile : null,
         settings: sanitizePlayerSettings(g.settings, true), // older libraries have no settings field
       }));
     } catch {
@@ -78,9 +81,10 @@ export class Library {
   }
 
   add(
-    meta: Omit<Game, 'projectFile' | 'hasThumbnail' | 'addedAt' | 'lastPlayedAt' | 'playtimeSeconds' | 'notes' | 'settings'>,
+    meta: Omit<Game, 'projectFile' | 'hasThumbnail' | 'addedAt' | 'lastPlayedAt' | 'playtimeSeconds' | 'notes' | 'settings' | 'profile'>,
     project: { data: Uint8Array; type: string },
     thumbnail: Uint8Array | null,
+    profile: string | null = null, // only used for new games; re-downloads keep their profile
   ): Game {
     const dir = this.gameDir(meta.id);
     fs.mkdirSync(dir, { recursive: true });
@@ -97,6 +101,7 @@ export class Library {
       lastPlayedAt: existing?.lastPlayedAt ?? null,
       playtimeSeconds: existing?.playtimeSeconds ?? 0,
       notes: existing?.notes ?? '', // re-downloading a game must never wipe its notes
+      profile: existing ? existing.profile : (profile && PROFILE_ID.test(profile) ? profile : null),
       settings: existing?.settings ?? {},
     };
     this.games = [...this.games.filter((g) => g.id !== meta.id), game];
@@ -116,11 +121,14 @@ export class Library {
     return fs.readFileSync(path.join(this.gameDir(id), game.projectFile));
   }
 
-  /** Replaces a game's overrides. Pass {} to go back to using the global defaults. */
-  setSettings(id: string, overrides: unknown): Game | undefined {
+  /** Sets a game's profile (null = default) and replaces its overrides ({} = none). */
+  setConfig(id: string, config: { profile?: unknown; overrides?: unknown }): Game | undefined {
     const game = this.get(id);
     if (!game) return undefined;
-    game.settings = sanitizePlayerSettings(overrides, true);
+    if (config.profile === null || (typeof config.profile === 'string' && PROFILE_ID.test(config.profile))) {
+      game.profile = config.profile;
+    }
+    if (config.overrides !== undefined) game.settings = sanitizePlayerSettings(config.overrides, true);
     this.save();
     return game;
   }
