@@ -1,6 +1,6 @@
 {
   "name": "flagship",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "A launcher for Scratch games, powered by TurboWarp. Not affiliated with the Scratch Team.",
   "main": "dist/main/main.js",
   "scripts": {

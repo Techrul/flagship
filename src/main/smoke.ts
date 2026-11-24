@@ -103,6 +103,11 @@ export async function runSmokeTest(ctx: {
   win.webContents.sendInputEvent({ type: 'mouseMove', x: Math.round(box.x), y: Math.round(box.y) });
   await wait(500);
   await shot(win, 'card-hover');
+  log('card triangle offset inside circle [x, y] px:', await js(`(() => {
+    const c = document.querySelector('.card-play').getBoundingClientRect();
+    const t = document.querySelector('.card-play path').getBoundingClientRect();
+    return [+(t.x + t.width / 2 - (c.x + c.width / 2)).toFixed(1), +(t.y + t.height / 2 - (c.y + c.height / 2)).toFixed(1)];
+  })()`));
 
   // Player on Enhanced (pause button on): click-to-play screen, then pause/resume.
   ctx.library.setConfig('104', { profile: 'enhanced', overrides: {} });
@@ -118,6 +123,11 @@ export async function runSmokeTest(ctx: {
     return [Math.round(a.x + a.width / 2 - (b.x + b.width / 2)), Math.round(a.y + a.height / 2 - (b.y + b.height / 2))];
   })()`);
   log('play circle offset from stage center [x, y] px:', await centerOff('.play-circle'));
+  log('player triangle offset inside circle [x, y] px:', await pjs(`(() => {
+    const c = document.querySelector('.play-circle').getBoundingClientRect();
+    const t = document.querySelector('.play-circle path').getBoundingClientRect();
+    return [+(t.x + t.width / 2 - (c.x + c.width / 2)).toFixed(1), +(t.y + t.height / 2 - (c.y + c.height / 2)).toFixed(1)];
+  })()`));
   await pjs(`document.querySelector('.click-to-play').click()`);
   await wait(1500);
   log('pause button visible:', await pjs(`!document.getElementById('pause').hidden`), 'state:', await pjs(`window.__flagshipState`));

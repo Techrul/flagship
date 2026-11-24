@@ -211,7 +211,6 @@ main { padding: 24px 28px 48px; }
   width: 24px;
   height: 24px;
   fill: var(--accent-text);
-  transform: translateX(2px); /* optical centering for a triangle */
 }
 .card-art:hover .card-scrim, .card-art:focus-visible .card-scrim { opacity: 1; }
 .card-art:hover .card-play, .card-art:focus-visible .card-play { opacity: 1; transform: scale(1); }
