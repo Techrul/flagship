@@ -341,3 +341,39 @@ test('update check falls back to the releases feed when the API is rate-limited'
   const upToDate = await checkReleases('0.4.0', 'Techrul/flagship', fakeFetch);
   assert.equal(upToDate.newer, false);
 });
+
+// ---------- package manager files ----------
+// @ts-ignore: plain JS module
+import { parseSums, renderAll, renderPkgbuild } from '../scripts/render-packages.mjs';
+
+function fakeSums(version: string) {
+  const files = ['win-x64.zip', 'win-arm64.zip', 'win-x64.exe', 'win-arm64.exe', 'mac-universal.zip', 'linux-x64.tar.gz', 'linux-arm64.tar.gz'];
+  return files.map((f, i) => `${String(i + 1).repeat(64)}  Flagship-${version}-${f}`).join('\n');
+}
+const repoFiles = { icon: Buffer.from('icon'), license: Buffer.from('license') };
+
+test('package files: every manager gets the right URLs and checksums', () => {
+  const sums = parseSums(fakeSums('0.4.0'));
+  const out = renderAll('0.4.0', sums, repoFiles);
+  assert.deepEqual(Object.keys(out).sort(), [
+    'Casks/flagship.rb', 'bucket/flagship.json', 'packaging/aur/PKGBUILD',
+    'packaging/winget/0.4.0/Techrul.Flagship.installer.yaml',
+    'packaging/winget/0.4.0/Techrul.Flagship.locale.en-US.yaml',
+    'packaging/winget/0.4.0/Techrul.Flagship.yaml',
+  ]);
+  const scoop = JSON.parse(out['bucket/flagship.json']);
+  assert.equal(scoop.architecture['64bit'].hash, '1'.repeat(64));
+  assert.match(scoop.architecture['64bit'].url, /\/v0\.4\.0\/Flagship-0\.4\.0-win-x64\.zip$/);
+  assert.match(out['Casks/flagship.rb'], new RegExp(`sha256 "${'5'.repeat(64)}"`));
+  assert.match(out['packaging/winget/0.4.0/Techrul.Flagship.installer.yaml'], new RegExp(`InstallerSha256: ${'3'.repeat(64)}`));
+  // Free text containing ": " must be quoted or the YAML breaks.
+  assert.match(out['packaging/winget/0.4.0/Techrul.Flagship.locale.en-US.yaml'], /^Description: ".*projects: paste.*"$/m);
+  assert.match(out['packaging/aur/PKGBUILD'], new RegExp(`sha256sums_aarch64=\\('${'7'.repeat(64)}'\\)`));
+});
+
+test('package files: betas skip the AUR, missing files fail loudly', () => {
+  const beta = renderAll('0.5.0-beta.1', parseSums(fakeSums('0.5.0-beta.1')), repoFiles);
+  assert.equal(beta['packaging/aur/PKGBUILD'], undefined);
+  assert.throws(() => renderPkgbuild('0.5.0-beta.1', {}, 'a', 'b'), /cannot contain/);
+  assert.throws(() => renderAll('0.4.0', {}, repoFiles), /no entry for Flagship-0\.4\.0-win-x64\.zip/);
+});
