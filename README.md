@@ -39,7 +39,7 @@ Grab the file for your system from the [latest release](https://github.com/Techr
 
 | System | File | Notes |
 |---|---|---|
-| **Windows** (x64 & ARM) | `Flagship-…-win-….exe` | Installer. Or the `.zip` for a portable copy. |
+| **Windows** | `Flagship-…-win-x64.exe` (or `win-arm64` for ARM laptops) | Installer. Or the `.zip` for a portable copy. |
 | **macOS** (Intel & Apple Silicon) | `Flagship-…-mac-universal.dmg` | See the first-launch note below. |
 | **Any Linux** | `Flagship-…-linux-….AppImage` | Make it executable, double-click. Works on Steam Deck too. |
 | **Debian / Ubuntu / Mint / Pop!_OS** | `Flagship-…-linux-amd64.deb` (or `arm64`) | `sudo apt install ./Flagship-….deb` |
