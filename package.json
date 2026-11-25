@@ -1,6 +1,6 @@
 {
   "name": "flagship",
-  "version": "0.3.4",
+  "version": "0.4.0-beta.1",
   "description": "A launcher for Scratch games, powered by TurboWarp. Not affiliated with the Scratch Team.",
   "main": "dist/main/main.js",
   "scripts": {
@@ -8,19 +8,86 @@
     "build:dev": "node scripts/build.mjs --dev",
     "start": "node scripts/build.mjs --dev && electron .",
     "typecheck": "tsc",
-    "test": "esbuild test/core.test.ts --bundle --platform=node --format=cjs --external:electron --outfile=.test-build/core.test.cjs --log-level=warning && node --test .test-build/core.test.cjs"
+    "test": "esbuild test/core.test.ts --bundle --platform=node --format=cjs --external:electron --outfile=.test-build/core.test.cjs --log-level=warning && node --test .test-build/core.test.cjs",
+    "dist": "node scripts/build.mjs && electron-builder --publish never"
   },
-  "author": "Techrul",
+  "author": {
+    "name": "Techrul",
+    "url": "https://github.com/Techrul"
+  },
   "license": "MIT",
-  "dependencies": {
-    "@turbowarp/packager": "3.14.0",
-    "@turbowarp/sbdl": "7.0.0"
-  },
   "devDependencies": {
+    "@turbowarp/packager": "3.14.0",
+    "@turbowarp/sbdl": "7.0.0",
     "@types/node": "26.6.6",
     "electron": "45.4.1",
+    "electron-builder": "26.18.0",
     "esbuild": "0.28.2",
     "typescript": "7.0.2"
   },
-  "private": true
+  "private": true,
+  "productName": "Flagship",
+  "homepage": "https://github.com/Techrul/flagship",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Techrul/flagship.git"
+  },
+  "build": {
+    "appId": "com.techrul.flagship",
+    "productName": "Flagship",
+    "artifactName": "Flagship-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "release",
+      "buildResources": "build-resources"
+    },
+    "files": [
+      "dist/**/*",
+      "assets/**/*",
+      "package.json",
+      "!**/*.map"
+    ],
+    "asar": true,
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm",
+        "pacman",
+        "tar.gz"
+      ],
+      "category": "Game",
+      "executableName": "flagship",
+      "synopsis": "A launcher for Scratch games",
+      "maintainer": "Techrul <https://github.com/Techrul>",
+      "desktop": {
+        "entry": {
+          "StartupWMClass": "flagship",
+          "Keywords": "scratch;turbowarp;games;launcher;"
+        }
+      },
+      "syncDesktopName": true
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.games",
+      "identity": "-"
+    }
+  },
+  "desktopName": "flagship.desktop"
 }

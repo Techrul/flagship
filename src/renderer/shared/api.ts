@@ -40,7 +40,7 @@ export interface FlagshipApi {
   updateProfile(id: string, patch: { name?: string; settings?: Partial<PlayerSettings> }): Promise<Result<AppSettings>>;
   deleteProfile(id: string): Promise<Result<AppSettings>>;
   checkForUpdates(): Promise<Result<UpdateCheck>>;
-  applyUpdate(): Promise<Result<{ from: string; to: string }>>;
+  applyUpdate(): Promise<Result<{ from: string; to: string } | { opened: true }>>;
   getVersion(): Promise<string>;
   getMenuStatus(): Promise<Result<MenuStatus>>;
   addToMenu(): Promise<Result<MenuStatus>>;

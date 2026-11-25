@@ -3,3 +3,4 @@ dist/
 .test-build/
 *.log
 .DS_Store
+release/

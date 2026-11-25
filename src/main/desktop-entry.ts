@@ -14,14 +14,29 @@ function desktopQuote(arg: string): string {
   return `"${arg.replace(/[\\"`$]/g, (c) => `\\${c}`)}"`;
 }
 
+/** How to start this copy of Flagship. null = an installer already handles the app menu. */
+export interface LaunchSpec {
+  exec: string;      // program to run
+  args: string[];    // its arguments
+  iconPng: string;
+  iconIco: string;
+}
+
 export class DesktopEntry {
   constructor(
-    private readonly appPath: string,    // the Flagship folder
-    private readonly electronPath: string, // the Electron binary running us
+    private readonly launch: LaunchSpec | null,
+    private readonly unsupportedReason = 'Your installer already added Flagship to your app menu.',
   ) {}
 
-  private get iconPng() { return path.join(this.appPath, 'assets', 'icon.png'); }
-  private get iconIco() { return path.join(this.appPath, 'assets', 'icon.ico'); }
+  /** A git clone: run Electron on the Flagship folder. */
+  static forClone(appPath: string, electronPath: string): DesktopEntry {
+    return new DesktopEntry({
+      exec: electronPath,
+      args: [appPath],
+      iconPng: path.join(appPath, 'assets', 'icon.png'),
+      iconIco: path.join(appPath, 'assets', 'icon.ico'),
+    });
+  }
 
   private location(): string | null {
     if (process.platform === 'linux') {
@@ -41,8 +56,8 @@ export class DesktopEntry {
       'Name=Flagship',
       'GenericName=Game Launcher',
       'Comment=Play Scratch games',
-      `Exec=${desktopQuote(this.electronPath)} ${desktopQuote(this.appPath)}`,
-      `Icon=${this.iconPng}`,
+      `Exec=${[this.launch!.exec, ...this.launch!.args].map(desktopQuote).join(' ')}`,
+      `Icon=${this.launch!.iconPng}`,
       'Terminal=false',
       'Categories=Game;',
       'Keywords=scratch;turbowarp;games;launcher;',
@@ -52,6 +67,7 @@ export class DesktopEntry {
   }
 
   status(): MenuStatus {
+    if (!this.launch) return { supported: false, reason: this.unsupportedReason };
     const location = this.location();
     if (!location) {
       return { supported: false, reason: 'Adding to the app menu works on Linux and Windows for now.' };
@@ -63,7 +79,7 @@ export class DesktopEntry {
       stale = fs.readFileSync(location, 'utf8') !== this.linuxEntry();
     } else if (installed && process.platform === 'win32') {
       try {
-        stale = shell.readShortcutLink(location).target !== this.electronPath;
+        stale = shell.readShortcutLink(location).target !== this.launch.exec;
       } catch {
         stale = true;
       }
@@ -73,17 +89,16 @@ export class DesktopEntry {
 
   install(): MenuStatus {
     const location = this.location();
-    if (!location) return this.status();
+    if (!location || !this.launch) return this.status();
     fs.mkdirSync(path.dirname(location), { recursive: true });
     if (process.platform === 'linux') {
       fs.writeFileSync(location, this.linuxEntry(), { mode: 0o755 });
     } else {
       const ok = shell.writeShortcutLink(location, 'replace', {
-        target: this.electronPath,
-        args: `"${this.appPath}"`,
-        cwd: this.appPath,
+        target: this.launch.exec,
+        args: this.launch.args.map((a) => `"${a}"`).join(' '),
         description: 'Play Scratch games',
-        icon: this.iconIco,
+        icon: this.launch.iconIco,
         iconIndex: 0,
         appUserModelId: 'com.techrul.flagship',
       });

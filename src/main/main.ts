@@ -8,7 +8,7 @@ import { runSmokeTest } from './smoke';
 import { SettingsStore } from './settings-store';
 import { CustomThemes } from './custom-themes';
 import { effectiveSettings, resolveProfile } from '../shared/settings';
-import { Updater, UpdateError } from './updater';
+import { Updater, UpdateError, checkReleases } from './updater';
 import { DesktopEntry } from './desktop-entry';
 
 // Serves cached thumbnails to the UI as flagship-media://thumb/<id>
@@ -176,8 +176,15 @@ function registerIpc(): void {
   });
 
   // ----- updates -----
+  // Clones update through git; installed builds (installer, AppImage, packages) check GitHub Releases.
+  let lastReleaseUrl: string | null = null;
   ipcMain.handle('updates:check', async () => {
     try {
+      if (app.isPackaged) {
+        const result = await checkReleases(app.getVersion());
+        lastReleaseUrl = result.url;
+        return { ok: true, result };
+      }
       return { ok: true, result: await updater.check() };
     } catch (error) {
       return { ok: false, error: error instanceof UpdateError ? error.message : `Update check failed: ${(error as Error).message}` };
@@ -186,6 +193,11 @@ function registerIpc(): void {
 
   ipcMain.handle('updates:apply', async (event) => {
     if (updating) return { ok: false, error: 'An update is already running.' };
+    if (app.isPackaged) {
+      // Installed builds: open the release page. Package managers (AUR, winget…) update on their own.
+      await shell.openExternal(lastReleaseUrl ?? 'https://github.com/Techrul/flagship/releases');
+      return { ok: true, result: { opened: true } };
+    }
     updating = true;
     try {
       const result = await updater.apply((stage) => event.sender.send('updates:progress', stage));
@@ -222,6 +234,19 @@ function registerIpc(): void {
   });
 }
 
+/** Clones: shortcut runs Electron on the folder. AppImages: shortcut runs the AppImage file.
+ *  Installers (exe, deb, rpm, pacman, dmg) add their own menu entry, so the button is hidden. */
+function createDesktopEntry(): DesktopEntry {
+  if (!app.isPackaged) return DesktopEntry.forClone(app.getAppPath(), process.execPath);
+  if (process.platform === 'linux' && process.env.APPIMAGE) {
+    // The icon lives inside the AppImage, which the menu can't read, so keep a copy next to the settings.
+    const icon = path.join(app.getPath('userData'), 'flagship-icon.png');
+    try { fs.writeFileSync(icon, fs.readFileSync(ICON)); } catch { /* menu entry still works without it */ }
+    return new DesktopEntry({ exec: process.env.APPIMAGE, args: [], iconPng: icon, iconIco: '' });
+  }
+  return new DesktopEntry(null);
+}
+
 function broadcast(channel: string, payload: unknown): void {
   for (const win of BrowserWindow.getAllWindows()) {
     if (!win.isDestroyed()) win.webContents.send(channel, payload);
@@ -251,7 +276,7 @@ app.whenReady().then(async () => {
   settings = new SettingsStore(app.getPath('userData'));
   customThemes = new CustomThemes(path.join(app.getPath('userData'), 'themes'));
   updater = new Updater(app.getAppPath());
-  desktopEntry = new DesktopEntry(app.getAppPath(), process.execPath);
+  desktopEntry = createDesktopEntry();
   registerIpc();
   registerMediaProtocol();
   libraryWindow = createLibraryWindow();

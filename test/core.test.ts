@@ -226,13 +226,13 @@ test('updater: up to date, then finds and applies a new commit', async () => {
   const { dev, user } = makeRepos();
   const updater = new Updater(user);
   let info = await updater.check();
-  assert.ok(info.supported && info.behind === 0);
+  assert.ok(info.supported && info.kind === 'git' && info.behind === 0);
 
   fs.writeFileSync(path.join(dev, 'new-feature.txt'), 'hi');
   git(dev, 'add', '-A'); git(dev, 'commit', '-q', '-m', 'Add profiles'); git(dev, 'push', '-q');
 
   info = await updater.check();
-  assert.ok(info.supported);
+  assert.ok(info.supported && info.kind === 'git');
   assert.equal(info.behind, 1);
   assert.equal(info.latestMessage, 'Add profiles');
 
@@ -243,7 +243,7 @@ test('updater: up to date, then finds and applies a new commit', async () => {
   assert.equal(fs.readFileSync(path.join(user, 'built.txt'), 'utf8'), 'yes');
   assert.deepEqual(stages, ['Downloading update', 'Rebuilding']);
   const after = await updater.check();
-  assert.ok(after.supported && after.behind === 0);
+  assert.ok(after.supported && after.kind === 'git' && after.behind === 0);
 });
 
 test('updater: refuses to clobber real local changes', async () => {
@@ -267,7 +267,7 @@ test('app menu: .desktop file launches this copy, quotes paths, and installs/rem
   const old = process.env.XDG_DATA_HOME;
   process.env.XDG_DATA_HOME = home;
   try {
-    const entry = new DesktopEntry('/home/me/My Games/flagship', '/home/me/My Games/flagship/node_modules/electron/dist/electron');
+    const entry = DesktopEntry.forClone('/home/me/My Games/flagship', '/home/me/My Games/flagship/node_modules/electron/dist/electron');
     const text = entry.linuxEntry();
     assert.match(text, /^Exec="\/home\/me\/My Games\/flagship\/node_modules\/electron\/dist\/electron" "\/home\/me\/My Games\/flagship"$/m);
     assert.match(text, /^StartupWMClass=flagship$/m);
@@ -280,7 +280,7 @@ test('app menu: .desktop file launches this copy, quotes paths, and installs/rem
     assert.equal(fs.readFileSync(path.join(home, 'applications', 'flagship.desktop'), 'utf8'), text);
 
     // Moving the folder makes the old shortcut stale.
-    const moved = new DesktopEntry('/elsewhere/flagship', '/elsewhere/flagship/node_modules/electron/dist/electron');
+    const moved = DesktopEntry.forClone('/elsewhere/flagship', '/elsewhere/flagship/node_modules/electron/dist/electron');
     const movedStatus = moved.status();
     assert.ok(movedStatus.supported && movedStatus.stale);
 
@@ -292,6 +292,52 @@ test('app menu: .desktop file launches this copy, quotes paths, and installs/rem
 });
 
 test('app menu: special characters in paths are escaped', () => {
-  const entry = new DesktopEntry('/tmp/we"ird$path', '/usr/bin/electron');
+  const entry = DesktopEntry.forClone('/tmp/we"ird$path', '/usr/bin/electron');
   assert.match(entry.linuxEntry(), /Exec="\/usr\/bin\/electron" "\/tmp\/we\\"ird\\\$path"/);
+});
+
+// ---------- installed builds: release version logic ----------
+import { checkReleases, compareVersions, pickLatestRelease, releasesFromAtom } from '../src/main/updater';
+
+test('version comparison handles betas', () => {
+  assert.ok(compareVersions('0.4.0', '0.3.4') > 0);
+  assert.ok(compareVersions('0.4.0', '0.4.0-beta.2') > 0);   // release beats its beta
+  assert.ok(compareVersions('0.4.0-beta.10', '0.4.0-beta.2') > 0); // numeric, not alphabetical
+  assert.ok(compareVersions('v1.0.0', '0.9.9') > 0);
+  assert.equal(compareVersions('0.4.0', 'v0.4.0'), 0);
+});
+
+test('stable users only see stable releases; beta users see betas', () => {
+  const r = (tag: string, prerelease = false, draft = false) => ({ tag_name: tag, html_url: tag, prerelease, draft });
+  const releases = [r('v0.4.0-beta.1', true), r('v0.3.4'), r('v0.5.0', false, true), r('nonsense')];
+  assert.equal(pickLatestRelease(releases, '0.3.4')?.tag_name, 'v0.3.4');
+  assert.equal(pickLatestRelease(releases, '0.4.0-beta.0')?.tag_name, 'v0.4.0-beta.1');
+  assert.equal(pickLatestRelease([], '0.3.4'), null);
+});
+
+test('app menu: AppImage entry runs the AppImage itself; installers hide the button', () => {
+  const appimage = new DesktopEntry({ exec: '/home/me/Apps/Flagship.AppImage', args: [], iconPng: '/home/me/.config/Flagship/flagship-icon.png', iconIco: '' });
+  assert.match(appimage.linuxEntry(), /^Exec="\/home\/me\/Apps\/Flagship\.AppImage"$/m);
+  const installed = new DesktopEntry(null).status();
+  assert.equal(installed.supported, false);
+});
+
+test('update check falls back to the releases feed when the API is rate-limited', async () => {
+  const atom = `<feed><entry><link rel="alternate" type="text/html" href="https://github.com/Techrul/flagship/releases/tag/v0.5.0-beta.1"/></entry>
+    <entry><link rel="alternate" type="text/html" href="https://github.com/Techrul/flagship/releases/tag/v0.4.0"/></entry></feed>`;
+  assert.deepEqual(releasesFromAtom(atom, 'Techrul/flagship').map((r) => [r.tag_name, r.prerelease]), [['v0.5.0-beta.1', true], ['v0.4.0', false]]);
+  const calls: string[] = [];
+  const fakeFetch = async (url: string) => {
+    calls.push(url);
+    if (url.includes('api.github.com')) return new Response('{"message":"API rate limit exceeded"}', { status: 403 });
+    return new Response(atom, { status: 200 });
+  };
+  const stable = await checkReleases('0.3.4', 'Techrul/flagship', fakeFetch);
+  assert.equal(stable.latest, '0.4.0');
+  assert.equal(stable.newer, true);
+  assert.equal(calls.length, 2);
+  const beta = await checkReleases('0.5.0-beta.0', 'Techrul/flagship', fakeFetch);
+  assert.equal(beta.latest, '0.5.0-beta.1');
+  const upToDate = await checkReleases('0.4.0', 'Techrul/flagship', fakeFetch);
+  assert.equal(upToDate.newer, false);
 });

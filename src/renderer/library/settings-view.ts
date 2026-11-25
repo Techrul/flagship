@@ -279,6 +279,20 @@ export async function checkForUpdates(silent: boolean): Promise<void> {
     setUpdateUi(info.reason, false);
     return;
   }
+  if (info.kind === 'release') {
+    // Installed build: point to the download. Package managers update it on their own.
+    isReleaseInstall = true;
+    $('update-apply').textContent = 'Download update';
+    $('update-banner-button').textContent = 'Download';
+    if (!info.newer) {
+      setUpdateUi(`You're up to date (v${info.current}). If you installed Flagship with a package manager (AUR, winget…), it updates there.`, false);
+      $('update-banner').hidden = true;
+      return;
+    }
+    setUpdateUi(`Flagship v${info.latest} is out (you have v${info.current}). Download it, or update through your package manager if you used one.`, true);
+    showBanner(`🚩 Flagship v${info.latest} is out`);
+    return;
+  }
   if (info.behind === 0) {
     setUpdateUi(`You're up to date (${info.branch} @ ${info.current}).`, false);
     $('update-banner').hidden = true;
@@ -287,13 +301,22 @@ export async function checkForUpdates(silent: boolean): Promise<void> {
   const what = `${info.behind} new update${info.behind === 1 ? '' : 's'} on ${info.branch}`;
   const latest = info.latestMessage ? `: "${info.latestMessage}"` : '';
   setUpdateUi(`${what}${latest}.`, true);
-  if (!updateDismissed) {
-    $('update-banner-text').textContent = `🚩 ${what}${latest}`;
-    $('update-banner').hidden = false;
-  }
+  showBanner(`🚩 ${what}${latest}`);
+}
+
+let isReleaseInstall = false;
+
+function showBanner(text: string) {
+  if (updateDismissed) return;
+  $('update-banner-text').textContent = text;
+  $('update-banner').hidden = false;
 }
 
 async function applyUpdate(): Promise<void> {
+  if (isReleaseInstall) {
+    await api.applyUpdate(); // opens the download page
+    return;
+  }
   setUpdateUi('Starting update…', true, true);
   $('update-banner').hidden = false;
   $('update-banner-text').textContent = 'Updating…';
@@ -333,7 +356,7 @@ function showMenuStatus(res: Awaited<ReturnType<typeof api.getMenuStatus>>): voi
   const s = res.result;
   if (!s.supported) { text.textContent = s.reason; return; }
   if (!s.installed) {
-    text.textContent = 'Add Flagship to your app menu so you can open it like any other app. It runs this copy, so updates keep working.';
+    text.textContent = 'Add Flagship to your app menu so you can open it like any other app.';
     add.hidden = false;
     add.textContent = 'Add to app menu';
   } else if (s.stale) {

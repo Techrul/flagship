@@ -6,7 +6,8 @@ import * as path from 'node:path';
 
 export type UpdateCheck =
   | { supported: false; reason: string }
-  | { supported: true; branch: string; upstream: string; current: string; behind: number; latestMessage: string | null };
+  | { supported: true; kind: 'git'; branch: string; upstream: string; current: string; behind: number; latestMessage: string | null }
+  | ReleaseCheck;
 
 export class UpdateError extends Error {}
 
@@ -67,7 +68,7 @@ export class Updater {
     const behind = Number(await this.git(['rev-list', '--count', `HEAD..${upstream}`])) || 0;
     const current = await this.git(['rev-parse', '--short', 'HEAD']);
     const latestMessage = behind > 0 ? await this.git(['log', '-1', '--format=%s', upstream]) : null;
-    return { supported: true, branch, upstream, current, behind, latestMessage };
+    return { supported: true, kind: 'git', branch, upstream, current, behind, latestMessage };
   }
 
   /** Files changed locally that would block a pull. A stray package-lock.json change (npm does this) is undone. */
@@ -126,4 +127,103 @@ export class Updater {
     }
     return { from: from.slice(0, 7), to: to.slice(0, 7) };
   }
+}
+
+// ---------- installed builds: check GitHub Releases ----------
+
+export type ReleaseCheck = {
+  supported: true;
+  kind: 'release';
+  current: string;
+  latest: string;
+  newer: boolean;
+  url: string;
+};
+
+/** "0.4.0-beta.2" -> comparable parts. Prereleases sort before the matching release. */
+function parseVersion(v: string): { nums: number[]; pre: (string | number)[] } | null {
+  const m = v.trim().replace(/^v/, '').match(/^(\d+)\.(\d+)\.(\d+)(?:-([0-9a-z.-]+))?/i);
+  if (!m) return null;
+  return {
+    nums: [Number(m[1]), Number(m[2]), Number(m[3])],
+    pre: m[4] ? m[4].split('.').map((p) => (/^\d+$/.test(p) ? Number(p) : p)) : [],
+  };
+}
+
+export function compareVersions(a: string, b: string): number {
+  const x = parseVersion(a);
+  const y = parseVersion(b);
+  if (!x || !y) return 0;
+  for (let i = 0; i < 3; i++) if (x.nums[i] !== y.nums[i]) return x.nums[i] - y.nums[i];
+  if (!x.pre.length || !y.pre.length) return x.pre.length ? -1 : y.pre.length ? 1 : 0;
+  for (let i = 0; i < Math.max(x.pre.length, y.pre.length); i++) {
+    const p = x.pre[i];
+    const q = y.pre[i];
+    if (p === undefined) return -1;
+    if (q === undefined) return 1;
+    if (p === q) continue;
+    if (typeof p === 'number' && typeof q === 'number') return p - q;
+    if (typeof p === 'number') return -1;
+    if (typeof q === 'number') return 1;
+    return p < q ? -1 : 1;
+  }
+  return 0;
+}
+
+interface GitHubRelease { tag_name: string; html_url: string; draft: boolean; prerelease: boolean }
+
+/** Picks the newest release this user should see. Beta users see betas; stable users only stable. */
+export function pickLatestRelease(releases: GitHubRelease[], current: string): GitHubRelease | null {
+  const wantPrereleases = (parseVersion(current)?.pre.length ?? 0) > 0;
+  const candidates = releases.filter((r) => !r.draft && parseVersion(r.tag_name) && (wantPrereleases || !r.prerelease));
+  candidates.sort((a, b) => compareVersions(b.tag_name, a.tag_name));
+  return candidates[0] ?? null;
+}
+
+type FetchLike = (url: string, init?: { headers?: Record<string, string> }) => Promise<Response>;
+
+/** Fallback for when the API is rate-limited (60/hour per network): the public Atom feed has no limit.
+ *  It doesn't flag prereleases, so a dash in the version ("0.4.0-beta.1") marks one, same as our tags. */
+export function releasesFromAtom(xml: string, repo: string): GitHubRelease[] {
+  const tags = [...xml.matchAll(/\/releases\/tag\/([^"<>\s]+)/g)].map((m) => decodeURIComponent(m[1]));
+  return [...new Set(tags)].map((tag) => ({
+    tag_name: tag,
+    html_url: `https://github.com/${repo}/releases/tag/${encodeURIComponent(tag)}`,
+    draft: false,
+    prerelease: tag.includes('-'),
+  }));
+}
+
+export async function checkReleases(current: string, repo = 'Techrul/flagship', fetchImpl: FetchLike = fetch): Promise<ReleaseCheck> {
+  const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'Flagship-update-check' };
+  let releases: GitHubRelease[] | null = null;
+  try {
+    const response = await fetchImpl(`https://api.github.com/repos/${repo}/releases?per_page=30`, { headers });
+    if (response.ok) releases = (await response.json()) as GitHubRelease[];
+    else if (response.status !== 403 && response.status !== 429) {
+      throw new UpdateError(`GitHub returned an error (HTTP ${response.status}) while checking for updates.`);
+    }
+  } catch (error) {
+    if (error instanceof UpdateError) throw error;
+    // Network trouble: try the feed below before giving up.
+  }
+  if (!releases) {
+    try {
+      const feed = await fetchImpl(`https://github.com/${repo}/releases.atom`, { headers: { 'User-Agent': headers['User-Agent'] } });
+      if (!feed.ok) throw new Error(String(feed.status));
+      releases = releasesFromAtom(await feed.text(), repo);
+    } catch {
+      throw new UpdateError("Couldn't reach GitHub to check for updates. Try again later.");
+    }
+  }
+  const latest = pickLatestRelease(releases, current);
+  const latestVersion = latest ? latest.tag_name.replace(/^v/, '') : current;
+  return {
+    supported: true,
+    kind: 'release',
+    current,
+    latest: latestVersion,
+    newer: compareVersions(latestVersion, current) > 0,
+    url: latest?.html_url ?? `https://github.com/${repo}/releases`,
+  };
 }

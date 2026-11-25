@@ -2,7 +2,7 @@
 
 A game launcher for Scratch games. Paste a project link, and Flagship downloads it, keeps a local copy, and plays it with [TurboWarp](https://turbowarp.org/)'s fast player — no browser tab needed.
 
-> **Status:** early beta (v0.3). Expect things to break.
+> **Status:** early beta (v0.4). Expect things to break.
 
 ## Features
 
@@ -33,7 +33,29 @@ Settings → Appearance → **Open folder**. Copy `example.css`, rename it, chan
 | v0.4 | Big picture mode, controller navigation, verified controller presets |
 | Later | Save states, plugins, maybe itch.io |
 
+## Download
+
+Grab the file for your system from the [latest release](https://github.com/Techrul/flagship/releases):
+
+| System | File | Notes |
+|---|---|---|
+| **Windows** (x64 & ARM) | `Flagship-…-win-….exe` | Installer. Or the `.zip` for a portable copy. |
+| **macOS** (Intel & Apple Silicon) | `Flagship-…-mac-universal.dmg` | See the first-launch note below. |
+| **Any Linux** | `Flagship-…-linux-….AppImage` | Make it executable, double-click. Works on Steam Deck too. |
+| **Debian / Ubuntu / Mint / Pop!_OS** | `Flagship-…-linux-amd64.deb` (or `arm64`) | `sudo apt install ./Flagship-….deb` |
+| **Fedora / openSUSE** | `Flagship-…-linux-x86_64.rpm` (or `aarch64`) | `sudo dnf install ./Flagship-….rpm` |
+| **Arch / CachyOS / Manjaro** | `Flagship-…-linux-x64.pacman` | `sudo pacman -U ./Flagship-….pacman` |
+| **Other Linux** | `Flagship-…-linux-….tar.gz` | Unpack anywhere and run `flagship`. |
+
+Installed copies check GitHub for new versions on launch and show a banner when one is out.
+
+**macOS first launch:** Flagship isn't signed with a paid Apple certificate yet, so macOS blocks it the first time.
+Open it once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. After that it opens normally.
+
+**Windows:** SmartScreen may say "Windows protected your PC" for the same reason. Click **More info → Run anyway**.
+
 ## Running from source
+
 
 Needs [Node.js](https://nodejs.org/) 22+ and git.
 
