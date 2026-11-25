@@ -1,11 +1,13 @@
 # Builds Flagship for every platform on GitHub's machines.
-# - Run it by hand (Actions tab → Build → Run workflow) to test builds; the files show up as downloadable artifacts.
+# - Runs on every push to main/beta (and by hand from the Actions tab); the files show up as downloadable artifacts.
 # - Push a version tag like v0.4.0 (or v0.4.0-beta.1 for a beta) to build AND publish a GitHub Release.
 name: Build
 
 on:
   push:
     tags: ['v*']
+    branches: [main, beta] # every push gets built and tested on all platforms
+    paths-ignore: ['**.md'] # …except README-only changes
   workflow_dispatch:
 
 permissions:
