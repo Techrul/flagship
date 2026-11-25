@@ -1,0 +1,73 @@
+/* Every color in Flagship comes from these variables, so a theme is just a set of overrides.
+   Custom themes (in the themes folder) redefine the same variables on :root. */
+:root,
+[data-theme="oled"] {
+  --bg: #000000;            /* true black, not gray */
+  --surface: #0b0b0b;
+  --surface-hover: #151515;
+  --border: #1f1f1f;
+  --text: #f2f2f2;
+  --text-dim: #8a8a8a;
+  --accent: #2ee6c8;        /* sea-breeze teal */
+  --accent-text: #001a16;
+  --danger: #ff5c7a;
+  --overlay: rgba(0, 0, 0, 0.72);
+  --radius: 12px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+  color-scheme: dark;
+}
+
+[data-theme="midnight"] {
+  --bg: #000000; --surface: #0c0a14; --surface-hover: #17132a; --border: #221c3a;
+  --text: #ece9f7; --text-dim: #8e88a8; --accent: #a78bfa; --accent-text: #160b33; --danger: #fb7185;
+}
+
+[data-theme="deep-sea"] {
+  --bg: #04121a; --surface: #0a2230; --surface-hover: #113246; --border: #16394d;
+  --text: #e6f7ff; --text-dim: #7fa6b8; --accent: #38e1ff; --accent-text: #00141a; --danger: #ff6b8b;
+  --radius: 14px;
+}
+
+[data-theme="mocha"] {
+  --bg: #1e1e2e; --surface: #313244; --surface-hover: #45475a; --border: #45475a;
+  --text: #cdd6f4; --text-dim: #a6adc8; --accent: #94e2d5; --accent-text: #11111b; --danger: #f38ba8;
+}
+
+[data-theme="tokyo-night"] {
+  --bg: #1a1b26; --surface: #24283b; --surface-hover: #2f3549; --border: #2f3549;
+  --text: #c0caf5; --text-dim: #7982a9; --accent: #7aa2f7; --accent-text: #101320; --danger: #f7768e;
+}
+
+[data-theme="dracula"] {
+  --bg: #282a36; --surface: #343746; --surface-hover: #44475a; --border: #44475a;
+  --text: #f8f8f2; --text-dim: #a0a4c0; --accent: #ff79c6; --accent-text: #2a0c1e; --danger: #ff5555;
+}
+
+[data-theme="nord"] {
+  --bg: #2e3440; --surface: #3b4252; --surface-hover: #434c5e; --border: #4c566a;
+  --text: #eceff4; --text-dim: #a3acbd; --accent: #88c0d0; --accent-text: #1d2631; --danger: #bf616a;
+}
+
+[data-theme="gruvbox"] {
+  --bg: #282828; --surface: #3c3836; --surface-hover: #504945; --border: #504945;
+  --text: #ebdbb2; --text-dim: #a89984; --accent: #fabd2f; --accent-text: #282828; --danger: #fb4934;
+}
+
+[data-theme="rose-pine"] {
+  --bg: #191724; --surface: #1f1d2e; --surface-hover: #26233a; --border: #2a273f;
+  --text: #e0def4; --text-dim: #908caa; --accent: #ebbcba; --accent-text: #191724; --danger: #eb6f92;
+}
+
+[data-theme="latte"] {
+  --bg: #eff1f5; --surface: #e6e9ef; --surface-hover: #dce0e8; --border: #ccd0da;
+  --text: #4c4f69; --text-dim: #6c6f85; --accent: #179299; --accent-text: #ffffff; --danger: #d20f39;
+  --overlay: rgba(239, 241, 245, 0.8);
+  color-scheme: light;
+}
+
+[data-theme="paper"] {
+  --bg: #ffffff; --surface: #f3f4f6; --surface-hover: #e5e7eb; --border: #e5e7eb;
+  --text: #111827; --text-dim: #6b7280; --accent: #0e9f8a; --accent-text: #ffffff; --danger: #dc2626;
+  --overlay: rgba(255, 255, 255, 0.8);
+  color-scheme: light;
+}

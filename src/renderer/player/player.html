@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oled">
+<head>
+  <meta charset="UTF-8">
+  <!-- The TurboWarp compiler needs 'unsafe-eval'; Scratch loads assets from blob:/data: URLs. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self' blob: data:; script-src 'self' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' flagship-media:; img-src 'self' blob: data:; media-src 'self' blob: data:; connect-src 'self' blob: data:; worker-src 'self' blob:">
+  <title>Flagship</title>
+  <link rel="stylesheet" href="../shared/themes.css">
+  <link rel="stylesheet" href="player.css">
+</head>
+<body>
+  <header class="controls">
+    <button id="flag" class="control" title="Green flag (start / restart)" aria-label="Green flag">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path class="flag-pole" d="M4 2.5v15" /><path class="flag-cloth" d="M5 3.2c2.6-1.4 5 1.4 9.6-.2v7.4c-4.6 1.6-7-1.2-9.6.2z" /></svg>
+    </button>
+    <button id="pause" class="control" title="Pause" aria-label="Pause" hidden>
+      <svg viewBox="0 0 20 20" aria-hidden="true"><rect class="icon-fill" x="5" y="4" width="3.4" height="12" rx="1" /><rect class="icon-fill" x="11.6" y="4" width="3.4" height="12" rx="1" /></svg>
+    </button>
+    <button id="stop" class="control" title="Stop" aria-label="Stop">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><rect class="stop-fill" x="4.5" y="4.5" width="11" height="11" rx="2" /></svg>
+    </button>
+    <h1 id="title" class="title">Loading…</h1>
+    <button id="fullscreen" class="control wide" title="Fullscreen (F11)">⛶ Fullscreen</button>
+  </header>
+
+  <div id="stage-wrap" class="stage-wrap">
+    <div id="stage" class="stage"></div>
+    <div id="overlay" class="overlay">
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <span id="loading-text">Loading game…</span>
+      </div>
+      <button class="click-to-play" hidden>
+        <span class="play-circle">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.6v12.8a1 1 0 0 0 1.5.86l10.2-6.4a1 1 0 0 0 0-1.72L8.5 4.74a1 1 0 0 0-1.5.86z" /></svg>
+        </span>
+        <span class="play-label">Click to play</span>
+      </button>
+      <div id="paused" class="paused-panel" hidden>
+        <p class="paused-title">Paused</p>
+        <button id="resume" class="resume-button" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.6v12.8a1 1 0 0 0 1.5.86l10.2-6.4a1 1 0 0 0 0-1.72L8.5 4.74a1 1 0 0 0-1.5.86z" /></svg>
+          Resume
+        </button>
+      </div>
+      <p id="error" class="error" hidden></p>
+    </div>
+  </div>
+
+  <script src="vendor/scaffolding-min.js"></script>
+  <script src="vendor/addons.js"></script>
+  <script src="player.js"></script>
+</body>
+</html>

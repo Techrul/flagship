@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="oled">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' flagship-media: data:; style-src 'self' flagship-media:; script-src 'self'">
+  <title>Flagship</title>
+  <link rel="stylesheet" href="../shared/themes.css">
+  <link rel="stylesheet" href="library.css">
+</head>
+<body>
+  <header class="topbar">
+    <button id="nav-library" class="brand" title="Library">
+      <span class="brand-flag" aria-hidden="true"></span>
+      <span class="brand-name">Flagship</span>
+    </button>
+    <form id="add-form" class="add-form">
+      <input id="add-input" type="text" autocomplete="off" spellcheck="false"
+             placeholder="Paste a Scratch project link or ID…">
+      <select id="add-profile" class="add-profile" title="Settings profile for this game"></select>
+      <button id="add-button" type="submit">Add game</button>
+    </form>
+    <button id="nav-settings" class="icon-button" title="Settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.4 7.4 0 0 0-1.7-1l-.4-2.6a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.4l-.4 2.7a7.6 7.6 0 0 0-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6L4.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6a.5.5 0 0 0-.1.6l2 3.5c.1.2.4.3.6.2l2.5-1c.5.4 1.1.8 1.7 1l.4 2.7c0 .2.2.4.5.4h4c.3 0 .5-.2.5-.4l.4-2.7c.6-.2 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
+    </button>
+  </header>
+
+  <div id="status" class="status" hidden>
+    <span id="status-text"></span>
+    <div class="progress"><div id="progress-bar"></div></div>
+  </div>
+
+  <div id="update-banner" class="update-banner" hidden>
+    <span id="update-banner-text"></span>
+    <button id="update-banner-button" type="button">Update now</button>
+    <button id="update-banner-dismiss" class="link-button" type="button">Later</button>
+  </div>
+
+  <!-- ============ Library ============ -->
+  <main id="library-view">
+    <div class="section-head">
+      <h1>Library</h1>
+      <span id="count" class="count"></span>
+    </div>
+    <div id="grid" class="grid"></div>
+    <div id="empty" class="empty" hidden>
+      <div class="empty-flag" aria-hidden="true"></div>
+      <h2>Your library is empty</h2>
+      <p>Paste a link like <code>scratch.mit.edu/projects/104</code> up top to add your first game.</p>
+    </div>
+  </main>
+
+  <!-- ============ Settings ============ -->
+  <main id="settings-view" class="settings-page" hidden>
+    <div class="section-head settings-head">
+      <h1>Settings</h1>
+      <span class="count">Changes save automatically</span>
+      <button id="settings-close" class="secondary-button close-button" type="button" title="Back to library (Esc)">✕ Close</button>
+    </div>
+
+    <nav class="settings-tabs">
+      <a href="#appearance">Appearance</a>
+      <a href="#profiles">Setting profiles</a>
+      <a href="#player">Player</a>
+      <a href="#about">Updates &amp; about</a>
+    </nav>
+
+    <section id="appearance" class="settings-card">
+      <h2>Appearance</h2>
+      <h3>Theme</h3>
+      <div id="theme-grid" class="theme-grid"></div>
+      <p id="theme-missing" class="warning" hidden>Your selected custom theme file is missing, so Flagship is showing OLED. Pick another theme or put the file back.</p>
+
+      <div class="setting-row">
+        <div class="setting-text">
+          <div class="setting-label"><label for="accent-toggle">Custom accent color</label></div>
+          <p class="setting-description">Replace the theme's highlight color (buttons, focus rings, progress bars) with your own.</p>
+        </div>
+        <div class="setting-control">
+          <input id="accent-picker" type="color" value="#2ee6c8" aria-label="Accent color">
+          <input id="accent-toggle" class="toggle" type="checkbox" role="switch">
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-text">
+          <div class="setting-label">Custom themes</div>
+          <p class="setting-description">Themes are small CSS files in your themes folder. Open the folder, copy <code>example.css</code>, change the colors, then hit Reload. They show up in the list above.</p>
+        </div>
+        <div class="setting-control">
+          <button id="open-themes-folder" class="secondary-button" type="button">Open folder</button>
+          <button id="reload-themes" class="secondary-button" type="button">Reload</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="profiles" class="settings-card">
+      <h2>Setting profiles</h2>
+      <p class="intro">
+        Flagship plays games with <strong>TurboWarp</strong>, a faster Scratch player. A <strong>profile</strong> is a saved set of
+        TurboWarp settings. Every game uses one: pick it when you add the game, or later in <strong>⋯ → Game settings</strong>.
+        <strong>Enhanced</strong> is recommended; switch a game to <strong>Vanilla</strong> if it acts weird.
+      </p>
+      <div class="profile-bar">
+        <div id="profile-tabs" class="profile-tabs" role="tablist"></div>
+        <button id="profile-new" class="secondary-button" type="button">+ New profile</button>
+      </div>
+      <div class="profile-panel">
+        <div class="profile-head">
+          <div class="profile-title">
+            <input id="profile-name" class="profile-name-input" type="text" maxlength="40" spellcheck="false" aria-label="Profile name">
+            <h3 id="profile-name-static" class="profile-name-static"></h3>
+            <span id="profile-builtin" class="pill">Built-in</span>
+            <span id="profile-default" class="pill accent">Default</span>
+          </div>
+          <div class="profile-actions">
+            <button id="profile-make-default" class="secondary-button" type="button">Make default</button>
+            <button id="profile-duplicate" class="secondary-button" type="button">Duplicate</button>
+            <button id="profile-delete" class="secondary-button danger-text" type="button">Delete</button>
+          </div>
+        </div>
+        <p id="profile-description" class="intro"></p>
+        <div id="profile-form"></div>
+      </div>
+    </section>
+
+    <section id="player" class="settings-card">
+      <h2>Player</h2>
+      <div class="setting-row">
+        <div class="setting-text">
+          <div class="setting-label"><label for="username-input">Username</label></div>
+          <p class="setting-description">What games see as your Scratch username. Some games greet you by name or save per player with it. Applies to every game.</p>
+        </div>
+        <div class="setting-control">
+          <input id="username-input" class="text-input" type="text" maxlength="32" spellcheck="false" placeholder="Nobody">
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="settings-card">
+      <h2>Updates &amp; about</h2>
+      <div id="menu-row" class="setting-row">
+        <div class="setting-text">
+          <div class="setting-label">App menu</div>
+          <p id="menu-status" class="setting-description">Checking…</p>
+        </div>
+        <div class="setting-control">
+          <button id="menu-remove" class="secondary-button" type="button" hidden>Remove</button>
+          <button id="menu-add" class="primary-button" type="button" hidden>Add to app menu</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-text">
+          <div class="setting-label">Updates</div>
+          <p id="update-status" class="setting-description">Checking…</p>
+        </div>
+        <div class="setting-control">
+          <button id="update-check" class="secondary-button" type="button">Check now</button>
+          <button id="update-apply" class="primary-button" type="button" hidden>Update &amp; restart</button>
+        </div>
+      </div>
+      <p class="intro">
+        <strong>Flagship</strong> <span id="app-version"></span> (beta) · MIT licensed · <a href="https://github.com/Techrul/flagship" target="_blank">GitHub</a><br>
+        Games run on the <a href="https://turbowarp.org/" target="_blank">TurboWarp</a> player and are downloaded with sb-downloader.
+        Scratch projects belong to their creators. Flagship isn't affiliated with the Scratch Team or Scratch Foundation.
+      </p>
+    </section>
+  </main>
+
+  <!-- ============ Per-game settings ============ -->
+  <dialog id="game-settings" class="dialog">
+    <header class="dialog-head">
+      <div>
+        <p class="dialog-kicker">Game settings</p>
+        <h2 id="game-settings-title"></h2>
+      </div>
+      <button id="game-settings-close" class="icon-button" type="button" aria-label="Close">✕</button>
+    </header>
+    <div class="dialog-body">
+      <div class="setting-row profile-pick">
+        <div class="setting-text">
+          <div class="setting-label"><label for="game-profile">Profile</label></div>
+          <p class="setting-description">The set of settings this game starts from. Anything you change below is just for this game.</p>
+        </div>
+        <div class="setting-control"><select id="game-profile"></select></div>
+      </div>
+      <p id="game-settings-summary" class="intro"></p>
+      <p class="intro dim">Most changes apply right away, even if the game is open. Stage size, compiler, warp timer, controller, mouse lock, cloud saves and skip-click-to-play apply the next time you launch it.</p>
+      <div id="game-settings-form"></div>
+    </div>
+    <footer class="dialog-foot">
+      <button id="game-settings-reset" class="secondary-button" type="button">Clear this game's changes</button>
+    </footer>
+  </dialog>
+
+  <template id="card-template">
+    <article class="card">
+      <button class="card-art" title="Play">
+        <img alt="" draggable="false">
+        <span class="card-scrim"></span>
+        <span class="card-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.6v12.8a1 1 0 0 0 1.5.86l10.2-6.4a1 1 0 0 0 0-1.72L8.5 4.74a1 1 0 0 0-1.5.86z" /></svg></span>
+        <span class="card-badge" hidden>Custom settings</span>
+      </button>
+      <div class="card-body">
+        <div class="card-text">
+          <h3 class="card-title"></h3>
+          <p class="card-meta"></p>
+        </div>
+        <button class="card-menu" title="More">⋯</button>
+      </div>
+      <div class="card-dropdown" hidden>
+        <button data-action="settings">Game settings</button>
+        <button data-action="scratch">View on Scratch</button>
+        <button data-action="redownload">Re-download</button>
+        <button data-action="remove" class="danger">Remove</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="library.js"></script>
+</body>
+</html>
