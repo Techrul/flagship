@@ -4,7 +4,7 @@ A game launcher for Scratch games. Paste a project link, and Flagship downloads 
 
 > [!WARNING]
 > ## 🤖 This project is vibe-coded
-> **Almost all of Flagship's code, tests, build setup and docs were written by an AI** ([Claude](https://claude.ai), made by Anthropic).
+> **Almost all of Flagship's code, tests, build setup and docs were written by an AI** ([Claude](https://claude.ai)).
 > Techrul (the human here) decides what to build, tests it, reports bugs and makes the calls — but **does not write or review the code line by line.**
 >
 > What that means for you:
@@ -15,6 +15,8 @@ A game launcher for Scratch games. Paste a project link, and Flagship downloads 
 > Because of this, Flagship is **not** on Flathub, which [requires disclosure of AI-generated code and lets reviewers reject it](https://docs.flathub.org/docs/for-app-authors/requirements#generative-ai-policy).
 
 > **Status:** early beta (v0.4). Expect things to break.
+
+If you'd like to get the newest builds earlier you can check out the [beta branch](https://github.com/Techrul/flagship/tree/beta). There can and will be bugs and issues so be aware.
 
 ## Install
 
@@ -58,7 +60,7 @@ Every release has a `SHA256SUMS.txt` if you want to verify your download.
 **macOS:** same reason — macOS blocks it the first time. Open it once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. After that it opens normally.
 
 > [!CAUTION]
-> **The Mac version is untested.** Techrul doesn't have a Mac, so no one has actually installed or played Flagship on one.
+> **The Mac version is untested.** I don't actually have a Mac, so no one has actually installed or played Flagship on one yet.
 > It's built automatically on GitHub's Mac machines and the automated tests pass there, but that's all.
 > The Homebrew tap's trick for skipping the "unidentified developer" block is untested too.
 > If you try it on a Mac, please [open an issue](https://github.com/Techrul/flagship/issues) saying whether it worked, even if it did.
