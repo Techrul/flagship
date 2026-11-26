@@ -120,11 +120,16 @@ A clone updates itself: when there's a new commit, a banner shows up with an **U
 
 **Branches:** work lands on `beta`; tested work gets merged into `main`. Every push to either builds and tests all platforms (Actions tab).
 
-**Releasing:** bump `version` in `package.json`, commit, then push a tag with the same version:
-- `v0.5.0-beta.1` (has a dash) → a GitHub **pre-release**. Only beta users are offered it; package managers skip it.
-- `v0.5.0` (no dash, tag it on `main`) → a normal release, and package managers are updated automatically.
+**Releasing:**
+1. Bump `version` in `package.json` (on `beta`, then merge into `main`).
+2. On GitHub: **Releases → Draft a new release**. Tag = `v` + that exact version (e.g. `v0.5.0`), target = `main` (or `beta` for a beta). Write the notes.
+3. Pick the label:
+   - **Pre-release** (use a version like `0.5.0-beta.1`) → only people already on a beta are offered it; package managers skip it.
+   - **None** → a normal release, and package managers are updated automatically.
+4. Hit **Publish release**. GitHub builds every platform (~15 min) and attaches all the files + `SHA256SUMS.txt` to it.
+   If the tag and `package.json` don't match, the build stops with an error: delete the release *and* its tag, fix it, and publish again.
 
-**What updates automatically on a stable release:**
+**What updates automatically on a normal (non-pre-release) release:**
 
 | Package manager | How | Setup needed |
 |---|---|---|

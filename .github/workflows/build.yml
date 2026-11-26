@@ -1,13 +1,16 @@
 # Builds Flagship for every platform on GitHub's machines.
 # - Runs on every push to main/beta (and by hand from the Actions tab); the files show up as downloadable artifacts.
-# - Push a version tag like v0.4.0 (or v0.4.0-beta.1 for a beta) to build AND publish a GitHub Release.
+# - Publish a release on GitHub (Releases → Draft a new release) and this builds every platform and attaches
+#   the files to it. Tag must match package.json's version, e.g. v0.4.0. Tick "Pre-release" for betas:
+#   betas are only offered to beta users and are NOT sent to package managers.
 name: Build
 
 on:
   push:
-    tags: ['v*']
     branches: [main, beta] # every push gets built and tested on all platforms
     paths-ignore: ['**.md'] # …except README-only changes
+  release:
+    types: [published] # you publish a release on GitHub → this builds and attaches every file to it
   workflow_dispatch:
 
 permissions:
@@ -43,13 +46,15 @@ jobs:
           cache: npm
 
       - name: Check the tag matches package.json
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name == 'release'
         shell: bash
+        env:
+          TAG: ${{ github.event.release.tag_name }}
         run: |
-          tag="${GITHUB_REF_NAME#v}"
+          tag="${TAG#v}"
           pkg="$(node -p "require('./package.json').version")"
           if [ "$tag" != "$pkg" ]; then
-            echo "::error::Tag v$tag doesn't match package.json version $pkg. Bump the version first."
+            echo "::error::The release tag is $TAG but package.json says $pkg. They must match (tag v$pkg). Delete this release and its tag, bump package.json or fix the tag, and publish again."
             exit 1
           fi
 
@@ -91,9 +96,9 @@ jobs:
             release/*.dmg
 
   release:
-    name: Publish release
+    name: Attach files to the release
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -107,37 +112,29 @@ jobs:
         working-directory: files
         run: sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
 
-      - name: Create the GitHub Release
+      - name: Attach every file to the release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          # Tags with a dash (v0.4.0-beta.1) are betas: marked as pre-releases, so stable users aren't offered them.
-          pre=""
-          case "$TAG" in *-*) pre="--prerelease" ;; esac
-          gh release create "$TAG" files/* \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "Flagship $TAG" \
-            --generate-notes \
-            $pre
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" files/* --repo "$GITHUB_REPOSITORY" --clobber
 
       # Preview of the package-manager files for this release (downloadable from the run page).
       - name: Render package-manager files
-        run: node scripts/render-packages.mjs "${{ github.ref_name }}" files/SHA256SUMS.txt rendered
+        run: node scripts/render-packages.mjs "${{ github.event.release.tag_name }}" files/SHA256SUMS.txt rendered
       - uses: actions/upload-artifact@v7
         with:
           name: package-manager-files
           path: rendered
 
-  # ---------------- Package managers (stable releases only; betas skip all of this) ----------------
+  # ---------------- Package managers (normal releases only; Pre-releases skip all of this) ----------------
 
   scoop-homebrew-aur:
     name: Scoop + Homebrew (+ AUR)
     needs: release
-    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+    if: github.event_name == 'release' && !github.event.release.prerelease
     runs-on: ubuntu-latest
     env:
-      TAG: ${{ github.ref_name }}
+      TAG: ${{ github.event.release.tag_name }}
       GH_TOKEN: ${{ github.token }}
       HAS_AUR: ${{ secrets.AUR_SSH_PRIVATE_KEY != '' }}
     steps:
@@ -170,15 +167,15 @@ jobs:
           commit_username: Techrul
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-          commit_message: Update to ${{ github.ref_name }}
+          commit_message: Update to ${{ github.event.release.tag_name }}
 
   winget:
     name: winget
     needs: release
-    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+    if: github.event_name == 'release' && !github.event.release.prerelease
     runs-on: windows-latest
     env:
-      TAG: ${{ github.ref_name }}
+      TAG: ${{ github.event.release.tag_name }}
       GH_TOKEN: ${{ github.token }}
       HAS_TOKEN: ${{ secrets.WINGET_TOKEN != '' }}
     steps:
