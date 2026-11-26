@@ -165,7 +165,7 @@ depends=('gtk3' 'nss' 'alsa-lib' 'xdg-utils')
 provides=('flagship')
 conflicts=('flagship')
 options=('!strip' '!debug')
-source=("flagship.png::https://raw.githubusercontent.com/${REPO}/v\${pkgver}/build-resources/icon.png"
+source=("flagship.png::https://raw.githubusercontent.com/${REPO}/v\${pkgver}/build-resources/icons/512x512.png"
         "LICENSE::https://raw.githubusercontent.com/${REPO}/v\${pkgver}/LICENSE")
 source_x86_64=("${HOMEPAGE}/releases/download/v\${pkgver}/Flagship-\${pkgver}-linux-x64.tar.gz")
 source_aarch64=("${HOMEPAGE}/releases/download/v\${pkgver}/Flagship-\${pkgver}-linux-arm64.tar.gz")
@@ -185,7 +185,8 @@ package() {
   install -d "$pkgdir/usr/bin"
   ln -s "/opt/$_pkgname/flagship" "$pkgdir/usr/bin/flagship"
 
-  install -Dm644 "$srcdir/flagship.png" "$pkgdir/usr/share/icons/hicolor/1024x1024/apps/flagship.png"
+  # 512x512 is the largest size icon themes look in; a 1024x1024 folder gets ignored by app launchers.
+  install -Dm644 "$srcdir/flagship.png" "$pkgdir/usr/share/icons/hicolor/512x512/apps/flagship.png"
   install -Dm644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
   install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/flagship.desktop" <<EOF
 [Desktop Entry]
@@ -229,7 +230,7 @@ if (process.argv[1] && import.meta.url && fileURLToPath(import.meta.url) === pro
   }
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
   const files = renderAll(version.replace(/^v/, ''), parseSums(readFileSync(sumsPath, 'utf8')), {
-    icon: readFileSync(join(root, 'build-resources', 'icon.png')),
+    icon: readFileSync(join(root, 'build-resources', 'icons', '512x512.png')),
     license: readFileSync(join(root, 'LICENSE')),
   });
   for (const [rel, text] of Object.entries(files)) {
