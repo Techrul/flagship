@@ -27,7 +27,7 @@ If you'd like to get the newest builds earlier you can check out the [beta branc
 | **Windows** (winget) | `winget install Techrul.Flagship` |
 | **Windows** (Scoop) | `scoop bucket add flagship https://github.com/Techrul/flagship` then `scoop install flagship/flagship` |
 | **macOS** (Homebrew) ⚠️ untested | `brew tap techrul/flagship https://github.com/Techrul/flagship` then `brew install --cask techrul/flagship/flagship` |
-| **Arch / CachyOS / Manjaro** | Use the [`.pacman` file](#or-download-it) for now. The AUR package (`flagship-bin`) is ready but waiting: [AUR registration is paused](https://archlinux.org/news/) |
+| **Arch / CachyOS / Manjaro / EndeavourOS** | See [Arch Linux](#arch-linux) below. (The AUR package is ready but waiting: [AUR registration is paused](https://archlinux.org/news/).) |
 
 > **Coming soon:** these go live with the first stable release (betas aren't published to package managers).
 > winget also waits for Microsoft to approve the first submission.
@@ -49,7 +49,7 @@ Grab the file for your system from the [latest release](https://github.com/Techr
 | **Any Linux** | `Flagship-…-linux-….AppImage` | Make it executable, double-click. Works on Steam Deck too. |
 | **Debian / Ubuntu / Mint / Pop!_OS** | `Flagship-…-linux-amd64.deb` (or `arm64`) | `sudo apt install ./Flagship-….deb` |
 | **Fedora / openSUSE** | `Flagship-…-linux-x86_64.rpm` (or `aarch64`) | `sudo dnf install ./Flagship-….rpm` |
-| **Arch / CachyOS / Manjaro** | `Flagship-…-linux-x64.pacman` (or `aarch64` for ARM) | `sudo pacman -U ./Flagship-….pacman`. To update, install the newer file the same way. Prefer building it yourself? Clone this repo and run `makepkg -si` in `packaging/aur/`. |
+| **Arch / CachyOS / Manjaro** | `Flagship-…-linux-x64.pacman` (or `aarch64` for ARM) | See [Arch Linux](#arch-linux) below. |
 | **Other Linux** | `Flagship-…-linux-….tar.gz` | Unpack anywhere and run `flagship`. |
 
 Downloaded copies check GitHub for new versions on launch and show a banner when one is out.
@@ -64,6 +64,38 @@ Every release has a `SHA256SUMS.txt` if you want to verify your download.
 > It's built automatically on GitHub's Mac machines and the automated tests pass there, but that's all.
 > The Homebrew tap's trick for skipping the "unidentified developer" block is untested too.
 > If you try it on a Mac, please [open an issue](https://github.com/Techrul/flagship/issues) saying whether it worked, even if it did.
+
+### Arch Linux
+
+Works on Arch and anything based on it (CachyOS, EndeavourOS, Manjaro, Garuda…). Until the AUR package is up, pick one:
+
+**Option 1 — prebuilt package (quickest).** Downloads the newest `.pacman` from GitHub and installs it:
+
+```sh
+curl -LO "$(curl -s https://api.github.com/repos/Techrul/flagship/releases/latest | grep -o 'https://[^"]*linux-x64\.pacman')"
+sudo pacman -U ./Flagship-*-linux-x64.pacman
+```
+
+On an ARM device, change both `linux-x64` to `linux-aarch64`. (These commands work in bash, zsh and fish.)
+
+**Option 2 — build the package yourself with `makepkg`.** Uses the same PKGBUILD that will go to the AUR, so you can read exactly what it does first:
+
+```sh
+git clone https://github.com/Techrul/flagship
+cd flagship/packaging/aur
+less PKGBUILD        # optional: have a look
+makepkg -si
+```
+
+**Updating:** Flagship shows a banner when a new version is out. For option 1, run the same two commands again
+(delete the old `.pacman` file first so the `*` only matches the new one). For option 2, run `git pull` in the
+`flagship` folder, then `makepkg -si` again in `packaging/aur`.
+
+**Uninstalling:** `sudo pacman -R flagship` (option 1) or `sudo pacman -R flagship-bin` (option 2).
+Your library, settings and saves stay in `~/.config/Flagship`; delete that folder too if you want them gone.
+
+**Later, from the AUR:** `yay -S flagship-bin` (or `paru -S flagship-bin`) once AUR registration reopens.
+pacman will offer to replace whichever option you used (answer yes).
 
 ## Features
 
