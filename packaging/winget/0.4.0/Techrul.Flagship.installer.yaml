@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.9.0.schema.json
+
+PackageIdentifier: Techrul.Flagship
+PackageVersion: 0.4.0
+InstallerType: nullsoft
+Scope: user
+InstallModes:
+- interactive
+- silent
+- silentWithProgress
+UpgradeBehavior: install
+Installers:
+- Architecture: x64
+  InstallerUrl: https://github.com/Techrul/flagship/releases/download/v0.4.0/Flagship-0.4.0-win-x64.exe
+  InstallerSha256: 468BFA998962AC5532C6C0466EEFE75A04D91659CFD197C5DAFEC9A7D1E96F39
+- Architecture: arm64
+  InstallerUrl: https://github.com/Techrul/flagship/releases/download/v0.4.0/Flagship-0.4.0-win-arm64.exe
+  InstallerSha256: B4A54EAD63A9F9EE340CF364CADFCF43178E9AADA4FFF66C79E240BA449CCAE3
+ManifestType: installer
+ManifestVersion: 1.9.0

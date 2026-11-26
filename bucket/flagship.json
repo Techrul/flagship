@@ -1,0 +1,35 @@
+{
+  "version": "0.4.0",
+  "description": "A launcher for Scratch games, powered by TurboWarp. Vibe-coded (written by AI).",
+  "homepage": "https://github.com/Techrul/flagship",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/Techrul/flagship/releases/download/v0.4.0/Flagship-0.4.0-win-x64.zip",
+      "hash": "952a66c99d15cb0714923fce3b8630b62e60d55f2f87793ec984f8b8999bb61d"
+    },
+    "arm64": {
+      "url": "https://github.com/Techrul/flagship/releases/download/v0.4.0/Flagship-0.4.0-win-arm64.zip",
+      "hash": "29839a671a0c145e113f3bcf375ae0cfb9cef048995c6abb31fcaabc472d1746"
+    }
+  },
+  "shortcuts": [
+    [
+      "Flagship.exe",
+      "Flagship"
+    ]
+  ],
+  "checkver": {
+    "github": "https://github.com/Techrul/flagship"
+  },
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/Techrul/flagship/releases/download/v$version/Flagship-$version-win-x64.zip"
+      },
+      "arm64": {
+        "url": "https://github.com/Techrul/flagship/releases/download/v$version/Flagship-$version-win-arm64.zip"
+      }
+    }
+  }
+}

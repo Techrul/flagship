@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.9.0.schema.json
+
+PackageIdentifier: Techrul.Flagship
+PackageVersion: 0.4.0
+PackageLocale: en-US
+Publisher: Techrul
+PublisherUrl: https://github.com/Techrul
+PackageName: Flagship
+PackageUrl: https://github.com/Techrul/flagship
+License: MIT
+LicenseUrl: https://github.com/Techrul/flagship/blob/main/LICENSE
+ShortDescription: "A launcher for Scratch games, powered by TurboWarp."
+Description: "Flagship is a game launcher for Scratch projects: paste a link, it downloads the game, keeps a local copy and plays it with the TurboWarp player. Setting profiles, per-game settings, themes and a pause button. Vibe-coded: almost all of the code is written by an AI (Claude). Not affiliated with the Scratch Team."
+Tags:
+- scratch
+- turbowarp
+- games
+- game-launcher
+ReleaseNotesUrl: https://github.com/Techrul/flagship/releases/tag/v0.4.0
+ManifestType: defaultLocale
+ManifestVersion: 1.9.0
