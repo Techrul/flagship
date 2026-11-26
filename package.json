@@ -65,7 +65,8 @@
           "Keywords": "scratch;turbowarp;games;launcher;"
         }
       },
-      "syncDesktopName": true
+      "syncDesktopName": true,
+      "icon": "build-resources/icons"
     },
     "win": {
       "target": [
