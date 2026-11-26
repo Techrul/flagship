@@ -24,7 +24,7 @@ A game launcher for Scratch games. Paste a project link, and Flagship downloads 
 |---|---|
 | **Windows** (winget) | `winget install Techrul.Flagship` |
 | **Windows** (Scoop) | `scoop bucket add flagship https://github.com/Techrul/flagship` then `scoop install flagship/flagship` |
-| **macOS** (Homebrew) | `brew tap techrul/flagship https://github.com/Techrul/flagship` then `brew install --cask techrul/flagship/flagship` |
+| **macOS** (Homebrew) ⚠️ untested | `brew tap techrul/flagship https://github.com/Techrul/flagship` then `brew install --cask techrul/flagship/flagship` |
 | **Arch / CachyOS / Manjaro** | Use the [`.pacman` file](#or-download-it) for now. The AUR package (`flagship-bin`) is ready but waiting: [AUR registration is paused](https://archlinux.org/news/) |
 
 > **Coming soon:** these go live with the first stable release (betas aren't published to package managers).
@@ -43,7 +43,7 @@ Grab the file for your system from the [latest release](https://github.com/Techr
 | System | File | Notes |
 |---|---|---|
 | **Windows** | `Flagship-…-win-x64.exe` (or `win-arm64` for ARM laptops) | Installer. Or the `.zip` for a portable copy. |
-| **macOS** (Intel & Apple Silicon) | `Flagship-…-mac-universal.dmg` | See the first-launch note below. |
+| **macOS** (Intel & Apple Silicon) ⚠️ untested | `Flagship-…-mac-universal.dmg` | See the Mac notes below. |
 | **Any Linux** | `Flagship-…-linux-….AppImage` | Make it executable, double-click. Works on Steam Deck too. |
 | **Debian / Ubuntu / Mint / Pop!_OS** | `Flagship-…-linux-amd64.deb` (or `arm64`) | `sudo apt install ./Flagship-….deb` |
 | **Fedora / openSUSE** | `Flagship-…-linux-x86_64.rpm` (or `aarch64`) | `sudo dnf install ./Flagship-….rpm` |
@@ -56,6 +56,12 @@ Every release has a `SHA256SUMS.txt` if you want to verify your download.
 **Windows:** Flagship isn't signed with a paid certificate, so SmartScreen may say "Windows protected your PC". Click **More info → Run anyway**.
 
 **macOS:** same reason — macOS blocks it the first time. Open it once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. After that it opens normally.
+
+> [!CAUTION]
+> **The Mac version is untested.** Techrul doesn't have a Mac, so no one has actually installed or played Flagship on one.
+> It's built automatically on GitHub's Mac machines and the automated tests pass there, but that's all.
+> The Homebrew tap's trick for skipping the "unidentified developer" block is untested too.
+> If you try it on a Mac, please [open an issue](https://github.com/Techrul/flagship/issues) saying whether it worked, even if it did.
 
 ## Features
 
