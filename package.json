@@ -1,6 +1,6 @@
 {
   "name": "flagship",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A launcher for Scratch games, powered by TurboWarp. Not affiliated with the Scratch Team.",
   "main": "dist/main/main.js",
   "scripts": {
@@ -88,6 +88,14 @@
       ],
       "category": "public.app-category.games",
       "identity": "-"
+    },
+    "pacman": {
+      "depends": [
+        "gtk3",
+        "nss",
+        "alsa-lib",
+        "xdg-utils"
+      ]
     }
   },
   "desktopName": "flagship.desktop"
