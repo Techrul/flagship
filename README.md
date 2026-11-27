@@ -91,7 +91,7 @@ makepkg -si
 (Or run the same two commands again; delete the old `.pacman` file first so the `*` only matches the new one.) For option 2,
 Flagship shows a banner; run `git pull` in the `flagship` folder, then `makepkg -si` again in `packaging/aur`.
 
-**Uninstalling:** `sudo pacman -R flagship` (option 1) or `sudo pacman -R flagship-bin` (option 2).
+**Uninstalling:** **Settings → Updates & about → Uninstall Flagship…** (asks for your password). Or in a terminal: `sudo pacman -R flagship` (option 1) or `sudo pacman -R flagship-bin` (option 2).
 Your library, settings and saves stay in `~/.config/Flagship`; delete that folder too if you want them gone.
 
 **Later, from the AUR:** `yay -S flagship-bin` (or `paru -S flagship-bin`) once AUR registration reopens.
@@ -116,7 +116,14 @@ Betas only update to newer betas or stable releases. Stable copies never jump to
 > [!NOTE]
 > Self-updating starts with **v0.5.0**. If you have v0.4.x, download v0.5.0 by hand once; it updates itself after that.
 
-## Features
+## Uninstalling
+
+Go to **Settings → Updates & about → Uninstall Flagship…**. It removes Flagship the right way for how you installed it
+(deletes the AppImage, runs the Windows uninstaller, or removes the .deb/.rpm/.pacman package, which asks for your password).
+Tick the box if you also want your library, notes and settings gone; otherwise they stay for next time.
+For winget, Scoop, Homebrew and portable copies it shows the command (or folder) to remove instead.
+
+
 
 - Add games by pasting a Scratch or TurboWarp link, or just the project ID
 - Games are cached locally, so they keep working even if they get unshared
@@ -141,7 +148,7 @@ Settings → Appearance → **Open folder**. Copy `example.css`, rename it, chan
 |---|---|
 | v0.1 – v0.3 | ✅ Library, downloader, player, settings, profiles, themes, pause button, git updater |
 | v0.4 | ✅ Builds for every platform, GitHub releases, package managers |
-| v0.5 | ✅ Self-updating (AppImage, Windows installer, .deb/.rpm/.pacman) |
+| v0.5 | ✅ Self-updating (AppImage, Windows installer, .deb/.rpm/.pacman), uninstall button |
 | Next | Per-game notes & save-code vault, collections |
 | Then | Search Scratch, curated recommendations, studio import |
 | Then | Big picture mode, controller navigation, verified controller presets |

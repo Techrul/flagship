@@ -95,6 +95,11 @@ export async function runSmokeTest(ctx: {
   await wait(600);
   log('menu after:', await js(`document.getElementById('menu-status').textContent`));
   await shot(win, 'settings-about');
+  await js(`document.getElementById('uninstall-open').click()`);
+  await wait(400);
+  log('uninstall plan:', await js(`document.getElementById('uninstall-summary').textContent`));
+  await shot(win, 'uninstall-dialog');
+  await js(`document.getElementById('uninstall-cancel').click()`);
 
   // Card hover: move the real mouse over the first card's art.
   await js(`document.getElementById('nav-library').click()`);

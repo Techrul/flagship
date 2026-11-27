@@ -68,6 +68,7 @@ export async function initSettings(opts: { onClose(): void; onChange(): void }):
   initProfileButtons();
   initUpdates();
   initAppMenu();
+  initUninstall();
   api.getVersion().then((v) => { $('app-version').textContent = `v${v}`; });
   return current;
 }
@@ -437,4 +438,56 @@ function initAppMenu(): void {
   api.getMenuStatus().then(showMenuStatus);
   $('menu-add').addEventListener('click', async () => showMenuStatus(await api.addToMenu()));
   $('menu-remove').addEventListener('click', async () => showMenuStatus(await api.removeFromMenu()));
+}
+
+// ---------- Uninstall ----------
+
+function initUninstall(): void {
+  const dialog = $<HTMLDialogElement>('uninstall-dialog');
+  const confirmButton = $<HTMLButtonElement>('uninstall-confirm');
+  const deleteData = $<HTMLInputElement>('uninstall-delete-data');
+  const error = $('uninstall-error');
+
+  $('uninstall-open').addEventListener('click', async () => {
+    const plan = await api.uninstallPlan();
+    $('uninstall-summary').textContent = plan.summary;
+    $('uninstall-manual-row').hidden = !plan.manual || plan.mode === 'run';
+    $('uninstall-manual').textContent = plan.manual ?? '';
+    $('uninstall-data-path').textContent = plan.dataFolder;
+    deleteData.checked = false;
+    error.hidden = true;
+    confirmButton.hidden = plan.mode !== 'run';
+    confirmButton.disabled = false;
+    confirmButton.textContent = 'Uninstall';
+    deleteData.hidden = plan.mode !== 'run';
+    $('uninstall-data-label').textContent = plan.mode === 'run'
+      ? 'Also delete my library, notes, saves and settings'
+      : 'Your library, notes and settings are kept here. Delete this folder too if you want them gone:';
+    $('uninstall-cancel').textContent = plan.mode === 'run' ? 'Cancel' : 'Close';
+    dialog.showModal();
+  });
+
+  const close = () => dialog.close();
+  $('uninstall-close').addEventListener('click', close);
+  $('uninstall-cancel').addEventListener('click', close);
+  $('uninstall-show-data').addEventListener('click', () => api.showDataFolder());
+  $('uninstall-copy').addEventListener('click', async () => {
+    await navigator.clipboard.writeText($('uninstall-manual').textContent ?? '');
+    $('uninstall-copy').textContent = 'Copied!';
+    setTimeout(() => ($('uninstall-copy').textContent = 'Copy'), 1500);
+  });
+  confirmButton.addEventListener('click', async () => {
+    if (deleteData.checked && !confirm('Delete your whole library, notes and settings? This can\'t be undone.')) return;
+    confirmButton.disabled = true;
+    confirmButton.textContent = 'Uninstalling…';
+    error.hidden = true;
+    const res = await api.uninstall(deleteData.checked);
+    // On success Flagship quits, so we only get here on failure.
+    if (!res.ok) {
+      error.textContent = res.error;
+      error.hidden = false;
+      confirmButton.disabled = false;
+      confirmButton.textContent = 'Uninstall';
+    }
+  });
 }

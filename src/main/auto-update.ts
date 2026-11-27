@@ -29,19 +29,19 @@ export function detectInstall(env: {
     const type = env.exists(typeFile) ? env.read(typeFile).trim() : '';
     if (type === 'pacman' || type === 'deb' || type === 'rpm') return { kind: 'system', packageType: type };
     if (env.execPath.startsWith('/opt/flagship/')) {
-      return { kind: 'manual', hint: 'Installed from the AUR: update with your AUR helper, e.g. yay -Syu.' };
+      return { kind: 'manual', packageType: 'aur', hint: 'Installed from the AUR: update with your AUR helper, e.g. yay -Syu.' };
     }
-    return { kind: 'manual', hint: 'Download the new .tar.gz (or switch to the AppImage, which updates itself).' };
+    return { kind: 'manual', packageType: 'tar.gz', hint: 'Download the new .tar.gz (or switch to the AppImage, which updates itself).' };
   }
 
   if (env.platform === 'win32') {
     const dir = path.win32.dirname(env.execPath);
     if (/[\\/]scoop[\\/]apps[\\/]/i.test(env.execPath)) {
-      return { kind: 'manual', hint: 'Installed with Scoop: run scoop update flagship.' };
+      return { kind: 'manual', packageType: 'scoop', hint: 'Installed with Scoop: run scoop update flagship.' };
     }
     // The installer puts an uninstaller next to the app; the portable zip doesn't.
     if (env.exists(path.win32.join(dir, 'Uninstall Flagship.exe'))) return { kind: 'nsis' };
-    return { kind: 'manual', hint: 'Portable copy: download the new .zip (or use the installer, which updates itself).' };
+    return { kind: 'manual', packageType: 'zip', hint: 'Portable copy: download the new .zip (or use the installer, which updates itself).' };
   }
 
   // macOS: automatic updates need a paid Apple signature, which Flagship doesn't have yet.

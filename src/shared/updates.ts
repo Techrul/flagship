@@ -30,3 +30,13 @@ export interface UpdateState {
   /** For 'system' installs: which package type (pacman / deb / rpm). */
   packageType?: string;
 }
+
+/** What the Uninstall button does for this install. 'run' = Flagship can do it; 'manual' = show `manual` to the user. */
+export interface UninstallPlan {
+  mode: 'run' | 'manual';
+  summary: string;
+  command?: string[];   // run with a password prompt (pkexec)
+  deleteFile?: string;  // AppImage
+  uninstaller?: string; // Windows installer's uninstaller
+  manual?: string;      // terminal command or folder to delete
+}

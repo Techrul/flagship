@@ -1,7 +1,7 @@
 // Types for window.flagship (see src/main/preload.ts).
 import type { AppSettings, PlayerSettings } from '../../shared/settings';
 import type { UpdateCheck } from '../../main/updater';
-import type { UpdateState } from '../../shared/updates';
+import type { UninstallPlan, UpdateState } from '../../shared/updates';
 import type { MenuStatus } from '../../main/desktop-entry';
 import type { CustomThemeInfo } from '../../shared/themes';
 
@@ -48,6 +48,9 @@ export interface FlagshipApi {
   removeFromMenu(): Promise<Result<MenuStatus>>;
   onUpdateProgress(callback: (stage: string) => void): void;
   getUpdateState(): Promise<UpdateState | null>;
+  uninstallPlan(): Promise<UninstallPlan & { dataFolder: string }>;
+  uninstall(deleteData: boolean): Promise<Result<null>>;
+  showDataFolder(): Promise<string>;
   onUpdateState(callback: (state: UpdateState) => void): void;
   listCustomThemes(): Promise<CustomThemeInfo[]>;
   openThemesFolder(): Promise<void>;

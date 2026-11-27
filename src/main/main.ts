@@ -11,6 +11,7 @@ import { effectiveSettings, resolveProfile } from '../shared/settings';
 import { Updater, UpdateError, checkReleases } from './updater';
 import { AutoUpdater, InstallInfo, currentInstall } from './auto-update';
 import { DesktopEntry } from './desktop-entry';
+import { performUninstall, uninstallPlan } from './uninstall';
 
 // Serves cached thumbnails to the UI as flagship-media://thumb/<id>
 protocol.registerSchemesAsPrivileged([
@@ -231,6 +232,28 @@ function registerIpc(): void {
       return { ok: false, error: `Couldn't change the app menu shortcut: ${(error as Error).message}` };
     }
   };
+  // ----- uninstall -----
+  const planUninstall = () => {
+    const exeDir = path.dirname(process.execPath);
+    const self =
+      install.kind === 'appimage' ? process.env.APPIMAGE! :
+      install.kind === 'nsis' ? path.join(exeDir, 'Uninstall Flagship.exe') :
+      install.kind === 'git' ? app.getAppPath() :
+      exeDir;
+    return { ...uninstallPlan(install, process.platform, self), dataFolder: app.getPath('userData') };
+  };
+  ipcMain.handle('uninstall:plan', () => planUninstall());
+  ipcMain.handle('uninstall:run', async (_event, deleteData: boolean) => {
+    const error = await performUninstall(planUninstall(), Boolean(deleteData), () => desktopEntry.remove());
+    return error ? { ok: false, error } : { ok: true, result: null };
+  });
+  // Testing only: uninstall right away ("keep" or "delete-data").
+  if (process.env.FLAGSHIP_UNINSTALL_NOW) {
+    performUninstall(planUninstall(), process.env.FLAGSHIP_UNINSTALL_NOW === 'delete-data', () => desktopEntry.remove())
+      .then((error) => { if (error) { console.error('[uninstall]', error); app.exit(1); } });
+  }
+  ipcMain.handle('uninstall:show-data', () => shell.openPath(app.getPath('userData')));
+
   ipcMain.handle('menu:status', () => menuAction(() => desktopEntry.status()));
   ipcMain.handle('menu:install', () => menuAction(() => desktopEntry.install()));
   ipcMain.handle('menu:remove', () => menuAction(() => desktopEntry.remove()));

@@ -403,3 +403,22 @@ test('install detection picks the right update method', () => {
   const mac = detectInstall({ ...base, platform: 'darwin', execPath: '/Applications/Flagship.app/Contents/MacOS/Flagship' });
   assert.equal(mac.kind, 'manual');
 });
+
+// ---------- uninstall button ----------
+import { uninstallPlan } from '../src/main/uninstall';
+
+test('uninstall plan matches how Flagship was installed', () => {
+  const pac = uninstallPlan({ kind: 'system', packageType: 'pacman' }, 'linux', '/opt/Flagship');
+  assert.deepEqual(pac.command, ['pkexec', 'pacman', '-R', '--noconfirm', 'flagship']);
+  assert.equal(pac.manual, 'sudo pacman -R --noconfirm flagship');
+  assert.deepEqual(uninstallPlan({ kind: 'system', packageType: 'deb' }, 'linux', '').command, ['pkexec', 'dpkg', '-r', 'flagship']);
+  assert.deepEqual(uninstallPlan({ kind: 'system', packageType: 'rpm' }, 'linux', '').command, ['pkexec', 'rpm', '-e', 'flagship']);
+  assert.deepEqual(uninstallPlan({ kind: 'manual', packageType: 'aur' }, 'linux', '').command?.slice(-1), ['flagship-bin']);
+  assert.equal(uninstallPlan({ kind: 'appimage' }, 'linux', '/home/me/Flagship.AppImage').deleteFile, '/home/me/Flagship.AppImage');
+  assert.equal(uninstallPlan({ kind: 'nsis' }, 'win32', 'C:\\F\\Uninstall Flagship.exe').uninstaller, 'C:\\F\\Uninstall Flagship.exe');
+  assert.equal(uninstallPlan({ kind: 'manual', packageType: 'scoop' }, 'win32', '').manual, 'scoop uninstall flagship');
+  assert.equal(uninstallPlan({ kind: 'manual' }, 'darwin', '').manual, 'brew uninstall --cask flagship');
+  for (const p of [uninstallPlan({ kind: 'git' }, 'linux', '/src/flagship'), uninstallPlan({ kind: 'manual', packageType: 'zip' }, 'win32', 'C:\\F')]) {
+    assert.equal(p.mode, 'manual');
+  }
+});
