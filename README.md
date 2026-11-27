@@ -52,7 +52,7 @@ Grab the file for your system from the [latest release](https://github.com/Techr
 | **Arch / CachyOS / Manjaro** | `Flagship-…-linux-x64.pacman` (or `aarch64` for ARM) | See [Arch Linux](#arch-linux) below. |
 | **Other Linux** | `Flagship-…-linux-….tar.gz` | Unpack anywhere and run `flagship`. |
 
-Downloaded copies check GitHub for new versions on launch and show a banner when one is out.
+Most copies update themselves. See [Updates](#updates) below.
 Every release has a `SHA256SUMS.txt` if you want to verify your download.
 
 **Windows:** Flagship isn't signed with a paid certificate, so SmartScreen may say "Windows protected your PC". Click **More info → Run anyway**.
@@ -87,17 +87,43 @@ less PKGBUILD        # optional: have a look
 makepkg -si
 ```
 
-**Updating:** Flagship shows a banner when a new version is out. For option 1, run the same two commands again
-(delete the old `.pacman` file first so the `*` only matches the new one). For option 2, run `git pull` in the
-`flagship` folder, then `makepkg -si` again in `packaging/aur`.
+**Updating:** with option 1, Flagship updates itself: it downloads the new version and asks for your password to install it.
+(Or run the same two commands again; delete the old `.pacman` file first so the `*` only matches the new one.) For option 2,
+Flagship shows a banner; run `git pull` in the `flagship` folder, then `makepkg -si` again in `packaging/aur`.
 
-**Uninstalling:** `sudo pacman -R flagship` (option 1) or `sudo pacman -R flagship-bin` (option 2).
+**Uninstalling:** **Settings → Updates & about → Uninstall Flagship…** (asks for your password). Or in a terminal: `sudo pacman -R flagship` (option 1) or `sudo pacman -R flagship-bin` (option 2).
 Your library, settings and saves stay in `~/.config/Flagship`; delete that folder too if you want them gone.
 
 **Later, from the AUR:** `yay -S flagship-bin` (or `paru -S flagship-bin`) once AUR registration reopens.
 pacman will offer to replace whichever option you used (answer yes).
 
-## Features
+## Updates
+
+Flagship checks for a new version when it starts (and every few hours while it's open). What happens next depends on how you installed it:
+
+| How you installed it | What happens |
+|---|---|
+| **AppImage** (recommended for Steam Deck, handhelds and big picture) | Downloads in the background, then installs when you close Flagship. Or click **Restart now**. No password needed. |
+| **Windows installer** (`.exe`) | Same: downloads in the background, installs when you close it. |
+| **`.deb` / `.rpm` / `.pacman`** (incl. Arch option 1) | Downloads in the background, then **Install** asks for your password (it's a system package) and restarts. |
+| **winget / Scoop / Homebrew** | Shows a banner; update with `winget upgrade`, `scoop update flagship` or `brew upgrade`. |
+| **Arch option 2** (`makepkg`) / `.tar.gz` / portable `.zip` | Shows a banner with a download link. |
+| **macOS `.dmg`** ⚠️ untested | Shows a banner with a download link. (Self-updating on Mac needs a paid Apple certificate.) |
+| **git clone** | **Update now** pulls the new commits and restarts. |
+
+Betas only update to newer betas or stable releases. Stable copies never jump to a beta.
+
+> [!NOTE]
+> Self-updating starts with **v0.5.0**. If you have v0.4.x, download v0.5.0 by hand once; it updates itself after that.
+
+## Uninstalling
+
+Go to **Settings → Updates & about → Uninstall Flagship…**. It removes Flagship the right way for how you installed it
+(deletes the AppImage, runs the Windows uninstaller, or removes the .deb/.rpm/.pacman package, which asks for your password).
+Tick the box if you also want your library, notes and settings gone; otherwise they stay for next time.
+For winget, Scoop, Homebrew and portable copies it shows the command (or folder) to remove instead.
+
+
 
 - Add games by pasting a Scratch or TurboWarp link, or just the project ID
 - Games are cached locally, so they keep working even if they get unshared
@@ -122,6 +148,7 @@ Settings → Appearance → **Open folder**. Copy `example.css`, rename it, chan
 |---|---|
 | v0.1 – v0.3 | ✅ Library, downloader, player, settings, profiles, themes, pause button, git updater |
 | v0.4 | ✅ Builds for every platform, GitHub releases, package managers |
+| v0.5 | ✅ Self-updating (AppImage, Windows installer, .deb/.rpm/.pacman), uninstall button |
 | Next | Per-game notes & save-code vault, collections |
 | Then | Search Scratch, curated recommendations, studio import |
 | Then | Big picture mode, controller navigation, verified controller presets |
@@ -160,6 +187,9 @@ A clone updates itself: when there's a new commit, a banner shows up with an **U
    - **None** → a normal release, and package managers are updated automatically.
 4. Hit **Publish release**. GitHub builds every platform (~15 min) and attaches all the files + `SHA256SUMS.txt` to it.
    If the tag and `package.json` don't match, the build stops with an error: delete the release *and* its tag, fix it, and publish again.
+
+Each release also gets `latest*.yml` and `.blockmap` files. Self-updating copies read these, so don't delete them.
+Releases marked **Pre-release** only reach copies already on a beta.
 
 **What updates automatically on a normal (non-pre-release) release:**
 

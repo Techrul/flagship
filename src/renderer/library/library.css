@@ -596,3 +596,16 @@ input[type="color"]:disabled { opacity: 0.35; cursor: default; }
   border-radius: 9px;
   min-width: 200px;
 }
+
+/* ---------- v0.5: uninstall ---------- */
+.dialog-small { width: min(520px, 92vw); }
+.uninstall-manual { display: flex; gap: 8px; align-items: center; margin: 8px 0 14px; }
+.uninstall-manual code {
+  flex: 1; padding: 8px 10px; border-radius: 8px; background: var(--surface-hover);
+  font-size: 13px; overflow-wrap: anywhere; user-select: all;
+}
+.uninstall-data { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; cursor: pointer; line-height: 1.45; }
+.uninstall-data input { margin-top: 4px; accent-color: var(--danger); }
+.uninstall-data .dim { color: var(--text-dim); font-size: 13px; overflow-wrap: anywhere; }
+.uninstall-foot { gap: 8px; }
+.danger-button { background: var(--danger); color: #fff; }

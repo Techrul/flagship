@@ -94,6 +94,8 @@ jobs:
             release/*.exe
             release/*.zip
             release/*.dmg
+            release/latest*.yml
+            release/*.blockmap
 
   release:
     name: Attach files to the release

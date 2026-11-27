@@ -9,7 +9,9 @@ import { SettingsStore } from './settings-store';
 import { CustomThemes } from './custom-themes';
 import { effectiveSettings, resolveProfile } from '../shared/settings';
 import { Updater, UpdateError, checkReleases } from './updater';
+import { AutoUpdater, InstallInfo, currentInstall } from './auto-update';
 import { DesktopEntry } from './desktop-entry';
+import { performUninstall, uninstallPlan } from './uninstall';
 
 // Serves cached thumbnails to the UI as flagship-media://thumb/<id>
 protocol.registerSchemesAsPrivileged([
@@ -27,6 +29,8 @@ const ICON = path.join(app.getAppPath(), 'assets', 'icon.png');
 // Windows groups taskbar windows by this id; it must match the Start Menu shortcut.
 if (process.platform === 'win32') app.setAppUserModelId('com.techrul.flagship');
 let updating = false;
+let install: InstallInfo;
+let autoUpdate: AutoUpdater | null = null; // set for appimage / nsis / system installs
 let libraryWindow: BrowserWindow | null = null;
 const playerWindows = new Map<string, BrowserWindow>();
 
@@ -176,14 +180,16 @@ function registerIpc(): void {
   });
 
   // ----- updates -----
-  // Clones update through git; installed builds (installer, AppImage, packages) check GitHub Releases.
+  // git clone → git updater · AppImage / Windows installer / .pacman .deb .rpm → electron-updater
+  // everything else → check GitHub Releases and say how to update that install.
   let lastReleaseUrl: string | null = null;
   ipcMain.handle('updates:check', async () => {
     try {
-      if (app.isPackaged) {
+      if (autoUpdate) return { ok: true, result: { supported: true, kind: 'auto', state: await autoUpdate.check() } };
+      if (install.kind === 'manual') {
         const result = await checkReleases(app.getVersion());
         lastReleaseUrl = result.url;
-        return { ok: true, result };
+        return { ok: true, result: { ...result, hint: install.hint } };
       }
       return { ok: true, result: await updater.check() };
     } catch (error) {
@@ -191,10 +197,15 @@ function registerIpc(): void {
     }
   });
 
+  ipcMain.handle('updates:state', () => autoUpdate?.snapshot ?? null);
+
   ipcMain.handle('updates:apply', async (event) => {
     if (updating) return { ok: false, error: 'An update is already running.' };
-    if (app.isPackaged) {
-      // Installed builds: open the release page. Package managers (AUR, winget…) update on their own.
+    if (autoUpdate) {
+      autoUpdate.installNow(); // quits, installs (system packages ask for your password), reopens
+      return { ok: true, result: { installing: true } };
+    }
+    if (install.kind === 'manual') {
       await shell.openExternal(lastReleaseUrl ?? 'https://github.com/Techrul/flagship/releases');
       return { ok: true, result: { opened: true } };
     }
@@ -221,6 +232,28 @@ function registerIpc(): void {
       return { ok: false, error: `Couldn't change the app menu shortcut: ${(error as Error).message}` };
     }
   };
+  // ----- uninstall -----
+  const planUninstall = () => {
+    const exeDir = path.dirname(process.execPath);
+    const self =
+      install.kind === 'appimage' ? process.env.APPIMAGE! :
+      install.kind === 'nsis' ? path.join(exeDir, 'Uninstall Flagship.exe') :
+      install.kind === 'git' ? app.getAppPath() :
+      exeDir;
+    return { ...uninstallPlan(install, process.platform, self), dataFolder: app.getPath('userData') };
+  };
+  ipcMain.handle('uninstall:plan', () => planUninstall());
+  ipcMain.handle('uninstall:run', async (_event, deleteData: boolean) => {
+    const error = await performUninstall(planUninstall(), Boolean(deleteData), () => desktopEntry.remove());
+    return error ? { ok: false, error } : { ok: true, result: null };
+  });
+  // Testing only: uninstall right away ("keep" or "delete-data").
+  if (process.env.FLAGSHIP_UNINSTALL_NOW) {
+    performUninstall(planUninstall(), process.env.FLAGSHIP_UNINSTALL_NOW === 'delete-data', () => desktopEntry.remove())
+      .then((error) => { if (error) { console.error('[uninstall]', error); app.exit(1); } });
+  }
+  ipcMain.handle('uninstall:show-data', () => shell.openPath(app.getPath('userData')));
+
   ipcMain.handle('menu:status', () => menuAction(() => desktopEntry.status()));
   ipcMain.handle('menu:install', () => menuAction(() => desktopEntry.install()));
   ipcMain.handle('menu:remove', () => menuAction(() => desktopEntry.remove()));
@@ -276,6 +309,14 @@ app.whenReady().then(async () => {
   settings = new SettingsStore(app.getPath('userData'));
   customThemes = new CustomThemes(path.join(app.getPath('userData'), 'themes'));
   updater = new Updater(app.getAppPath());
+  install = currentInstall();
+  if (install.kind === 'appimage' || install.kind === 'nsis' || install.kind === 'system') {
+    autoUpdate = new AutoUpdater(install, (state) => {
+      broadcast('updates:state', state);
+      // Testing only: quit as soon as an update is downloaded, which triggers the install-on-quit.
+      if (process.env.FLAGSHIP_QUIT_WHEN_UPDATE_READY && state.phase === 'ready') app.quit();
+    });
+  }
   desktopEntry = createDesktopEntry();
   registerIpc();
   registerMediaProtocol();
