@@ -7,7 +7,8 @@ import * as path from 'node:path';
 export type UpdateCheck =
   | { supported: false; reason: string }
   | { supported: true; kind: 'git'; branch: string; upstream: string; current: string; behind: number; latestMessage: string | null }
-  | ReleaseCheck;
+  | (ReleaseCheck & { hint?: string })
+  | { supported: true; kind: 'auto'; state: import('../shared/updates').UpdateState };
 
 export class UpdateError extends Error {}
 

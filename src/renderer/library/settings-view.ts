@@ -4,6 +4,7 @@ import { applyTheme } from '../shared/theme-runtime';
 import { renderSettingsForm } from './settings-form';
 import { BUILT_IN_THEMES, ThemeInfo } from '../../shared/themes';
 import { AppSettings, PlayerSettings, Profile, effectiveSettings, resolveProfile } from '../../shared/settings';
+import type { UpdateState } from '../../shared/updates';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -279,17 +280,24 @@ export async function checkForUpdates(silent: boolean): Promise<void> {
     setUpdateUi(info.reason, false);
     return;
   }
+  if (info.kind === 'auto') {
+    // AppImage / Windows installer / .pacman .deb .rpm: electron-updater does the work; progress arrives as events.
+    updateMode = 'auto';
+    renderAutoState(info.state);
+    return;
+  }
   if (info.kind === 'release') {
-    // Installed build: point to the download. Package managers update it on their own.
-    isReleaseInstall = true;
+    // Can't update itself (macOS, portable, tar.gz, Scoop, AUR): say how to update this install.
+    updateMode = 'release';
     $('update-apply').textContent = 'Download update';
     $('update-banner-button').textContent = 'Download';
+    const how = info.hint ? ` ${info.hint}` : '';
     if (!info.newer) {
-      setUpdateUi(`You're up to date (v${info.current}). If you installed Flagship with a package manager (AUR, winget…), it updates there.`, false);
+      setUpdateUi(`You're up to date (v${info.current}).${how}`, false);
       $('update-banner').hidden = true;
       return;
     }
-    setUpdateUi(`Flagship v${info.latest} is out (you have v${info.current}). Download it, or update through your package manager if you used one.`, true);
+    setUpdateUi(`Flagship v${info.latest} is out (you have v${info.current}).${how}`, true);
     showBanner(`🚩 Flagship v${info.latest} is out`);
     return;
   }
@@ -304,7 +312,54 @@ export async function checkForUpdates(silent: boolean): Promise<void> {
   showBanner(`🚩 ${what}${latest}`);
 }
 
-let isReleaseInstall = false;
+let updateMode: 'git' | 'release' | 'auto' = 'git';
+
+/** Turns the auto-updater's state into the banner + settings text. */
+function renderAutoState(state: UpdateState): void {
+  const v = state.version ? `v${state.version}` : 'the update';
+  const needsPassword = state.kind === 'system';
+  const button = $<HTMLButtonElement>('update-banner-button');
+  const apply = $<HTMLButtonElement>('update-apply');
+  button.hidden = false;
+  button.disabled = false;
+  switch (state.phase) {
+    case 'idle':
+    case 'checking':
+      setUpdateUi('Checking for updates…', false, true);
+      return;
+    case 'none':
+      setUpdateUi(`You're up to date (v${state.current}). Updates download and install automatically${needsPassword ? ' (you\'ll be asked for your password to install)' : ''}.`, false);
+      $('update-banner').hidden = true;
+      return;
+    case 'downloading':
+      setUpdateUi(`Downloading Flagship ${v}… ${state.percent ?? 0}%`, false, true);
+      button.hidden = true;
+      showBanner(`⬇️ Downloading Flagship ${v}… ${state.percent ?? 0}%`);
+      return;
+    case 'ready':
+      if (needsPassword) {
+        apply.textContent = 'Install (asks for password)';
+        button.textContent = 'Install';
+        setUpdateUi(`Flagship ${v} is downloaded. Installing it needs your password, then Flagship restarts.`, true);
+        showBanner(`🚩 Flagship ${v} is ready to install`);
+      } else {
+        apply.textContent = 'Restart & update';
+        button.textContent = 'Restart now';
+        setUpdateUi(`Flagship ${v} is ready. It installs automatically when you close Flagship, or restart now.`, true);
+        showBanner(`🚩 Flagship ${v} is ready: it installs when you close Flagship`);
+      }
+      return;
+    case 'installing':
+      setUpdateUi(needsPassword ? 'Installing… enter your password in the popup.' : 'Installing and restarting…', false, true);
+      button.disabled = true;
+      $('update-banner-text').textContent = needsPassword ? 'Installing… enter your password in the popup' : 'Installing…';
+      return;
+    case 'error':
+      setUpdateUi(state.error ?? 'Update failed.', false);
+      $('update-banner').hidden = true; // don't nag; the details are in Settings
+      return;
+  }
+}
 
 function showBanner(text: string) {
   if (updateDismissed) return;
@@ -313,8 +368,10 @@ function showBanner(text: string) {
 }
 
 async function applyUpdate(): Promise<void> {
-  if (isReleaseInstall) {
-    await api.applyUpdate(); // opens the download page
+  if (updateMode !== 'git') {
+    // release: opens the download page · auto: installs + restarts (progress arrives via onUpdateState)
+    const res = await api.applyUpdate();
+    if (!res.ok) setUpdateUi(res.error, true);
     return;
   }
   setUpdateUi('Starting update…', true, true);
@@ -335,7 +392,13 @@ function initUpdates(): void {
     setUpdateUi(`${stage}…`, true, true);
     $('update-banner-text').textContent = `${stage}…`;
   });
+  api.onUpdateState((state) => {
+    updateMode = 'auto';
+    renderAutoState(state);
+  });
   $('update-check').addEventListener('click', () => checkForUpdates(false));
+  // Long sessions (e.g. big picture left running) still pick up updates.
+  setInterval(() => checkForUpdates(true), 6 * 60 * 60 * 1000);
   $('update-apply').addEventListener('click', applyUpdate);
   $('update-banner-button').addEventListener('click', applyUpdate);
   $('update-banner-dismiss').addEventListener('click', () => {

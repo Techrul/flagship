@@ -1,6 +1,6 @@
 {
   "name": "flagship",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "A launcher for Scratch games, powered by TurboWarp. Not affiliated with the Scratch Team.",
   "main": "dist/main/main.js",
   "scripts": {
@@ -23,7 +23,8 @@
     "electron": "45.4.1",
     "electron-builder": "26.18.0",
     "esbuild": "0.28.2",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "electron-updater": "6.8.11"
   },
   "private": true,
   "productName": "Flagship",
@@ -97,7 +98,14 @@
         "alsa-lib",
         "xdg-utils"
       ]
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Techrul",
+        "repo": "flagship"
+      }
+    ]
   },
   "desktopName": "flagship.desktop"
 }
